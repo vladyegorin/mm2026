@@ -1,607 +1,930 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-interface Intervention {
-  type: "angel" | "demon";
-  character: string;
-  portrait: string;
-  message: string;
-  codeModification?: (code: string) => string;
+// ============================================================================
+// MUSIC PLACEHOLDERS
+// Replace each null with: new Audio('/sounds/filename.mp3')
+// Then call .play() / .pause() / set .loop = true as needed
+// ============================================================================
+const MUSIC_FILES: Record<string, HTMLAudioElement | null> = {
+  // Screen 1 — Two Sum
+  ghostFight:    null,   // Submit bad O(n²) → Vibey talks aggressively
+  home:          null,   // Cleany appears with hashmap hint
+  sans:          null,   // You add a comment, Vibey reacts
+  nyehHehHeh:   null,   // Vibey complains about comments
+  snowdinTown:   null,   // Both talk after correct submission
+
+  // Screen 2 — Medium
+  bonetrousle:   null,   // Vibey pulsating and growing on screen
+  hotel:         null,   // Cleany reacts to Vibey's inserted line
+  heartache:     null,   // Both characters argue after submit
+
+  // Screen 3 — Hard
+  // (silence at start — intentional, no track)
+  strongerMonsters: null, // Screen flickers, big Vibey appears with dialogue
+  megalovania:   null,   // Fight scene: code auto-writes, Cleany erases
+  hisTheme:      null,   // Final resolution dialogue
+};
+
+function playTrack(key: string) {
+  // TODO: uncomment when audio files are placed in /public/sounds/
+  // const track = MUSIC_FILES[key];
+  // if (!track) return;
+  // Object.values(MUSIC_FILES).forEach(t => { if (t) { t.pause(); t.currentTime = 0; } });
+  // track.loop = true;
+  // track.play().catch(() => {});
+}
+function stopAllMusic() {
+  // TODO: uncomment when audio files are placed in /public/sounds/
+  // Object.values(MUSIC_FILES).forEach(t => { if (t) { t.pause(); t.currentTime = 0; } });
 }
 
-// ---------------------------------------------------------------------------
-// Web Audio
-// ---------------------------------------------------------------------------
-function createCtx(): AudioContext {
-  return new (window.AudioContext || (window as any).webkitAudioContext)();
+// ============================================================================
+// WEB AUDIO — blip sounds (no files needed)
+// ============================================================================
+let _audioCtx: AudioContext | null = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  if (_audioCtx.state === "suspended") _audioCtx.resume();
+  return _audioCtx;
 }
-function playBlip(ctx: AudioContext, pitch = 480, vol = 0.05) {
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.connect(g); g.connect(ctx.destination);
-  osc.type = "square";
-  osc.frequency.value = pitch;
-  g.gain.setValueAtTime(vol, ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-  osc.start(); osc.stop(ctx.currentTime + 0.07);
-}
-function playAccept(ctx: AudioContext) {
-  [440, 554, 659].forEach((f, i) => {
+function blip(pitch = 480, vol = 0.05) {
+  try {
+    const ctx = getAudioCtx();
     const osc = ctx.createOscillator(); const g = ctx.createGain();
     osc.connect(g); g.connect(ctx.destination);
-    osc.type = "triangle"; osc.frequency.value = f;
-    const t = ctx.currentTime + i * 0.08;
-    g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-    osc.start(t); osc.stop(t + 0.22);
-  });
+    osc.type = "square"; osc.frequency.value = pitch;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+    osc.start(); osc.stop(ctx.currentTime + 0.07);
+  } catch {}
 }
-function playEvil(ctx: AudioContext) {
-  [220, 185, 155].forEach((f, i) => {
-    const osc = ctx.createOscillator(); const g = ctx.createGain();
-    osc.connect(g); g.connect(ctx.destination);
-    osc.type = "sawtooth"; osc.frequency.value = f;
-    const t = ctx.currentTime + i * 0.1;
-    g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-    osc.start(t); osc.stop(t + 0.28);
-  });
+function playSuccess() {
+  try {
+    const ctx = getAudioCtx();
+    [523,659,784,1047].forEach((f,i) => {
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = "triangle"; osc.frequency.value = f;
+      const t = ctx.currentTime + i*0.12;
+      g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.35);
+      osc.start(t); osc.stop(t+0.38);
+    });
+  } catch {}
 }
-function playSuccess(ctx: AudioContext) {
-  [523, 659, 784, 1047].forEach((f, i) => {
-    const osc = ctx.createOscillator(); const g = ctx.createGain();
-    osc.connect(g); g.connect(ctx.destination);
-    osc.type = "triangle"; osc.frequency.value = f;
-    const t = ctx.currentTime + i * 0.12;
-    g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-    osc.start(t); osc.stop(t + 0.35);
-  });
+function playBadSubmit() {
+  try {
+    const ctx = getAudioCtx();
+    [200,160,130].forEach((f,i) => {
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = "sawtooth"; osc.frequency.value = f;
+      const t = ctx.currentTime + i*0.09;
+      g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+      osc.start(t); osc.stop(t+0.35);
+    });
+  } catch {}
+}
+function playSoftChime() {
+  try {
+    const ctx = getAudioCtx();
+    [659,784,880].forEach((f,i) => {
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = "triangle"; osc.frequency.value = f;
+      const t = ctx.currentTime + i*0.1;
+      g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.4);
+      osc.start(t); osc.stop(t+0.45);
+    });
+  } catch {}
 }
 
-// ---------------------------------------------------------------------------
-// Problem data
-// ---------------------------------------------------------------------------
-const TWO_SUM_DESCRIPTION = [
-  "* ...",
-  "* heya.",
-  "* i'm sans. sans the skeleton.",
-  "* you look like you need a coding problem.",
-  "* don't worry. it's an easy one.",
-  "* well. easy for some people.",
-  "* Given an array of integers 'nums' and an integer 'target',",
-  "* return indices of the two numbers that add up to target.",
-  "* You may assume each input has exactly one solution.",
-  "* and you can't use the same element twice.",
-  "* pretty straightforward.",
-  "* unless you make it weird.",
-  "* which you probably will.",
-  "* ...good luck.",
-];
+// ============================================================================
+// TYPES
+// ============================================================================
+type Speaker = "vibey" | "cleany" | "system";
+interface DialogueLine {
+  speaker: Speaker;
+  text: string;
+  effect?: "shake" | "glitch" | "calm" | "flash" | "none";
+  onEnter?: () => void;
+}
 
-const STARTER_CODE = `function twoSum(nums: number[], target: number): number[] {
-  // your code here
+// ============================================================================
+// CODE SNIPPETS
+// ============================================================================
+const CODE_S1_BAD = `function twoSum(nums: number[], target: number): number[] {
+  for (let i = 0; i < nums.length; i++) {
+    for (let j = i + 1; j < nums.length; j++) {
+      if (nums[i] + nums[j] === target) {
+        return [i, j];
+      }
+    }
+  }
   return [];
 }`;
 
-const TEST_CASES = [
-  { input: "nums = [2,7,11,15], target = 9", expected: "[0,1]", nums: [2,7,11,15], target: 9 },
-  { input: "nums = [3,2,4], target = 6", expected: "[1,2]", nums: [3,2,4], target: 6 },
-  { input: "nums = [3,3], target = 6", expected: "[0,1]", nums: [3,3], target: 6 },
-];
-
-// ---------------------------------------------------------------------------
-// Intervention engine
-// ---------------------------------------------------------------------------
-const ANGEL_INTERVENTIONS: Intervention[] = [
-  {
-    type: "angel", character: "CLEANY", portrait: "😇",
-    message: "* hey! you should use a hash map for O(n) time. trust me on this one.",
-    codeModification: (code) => code.includes("Map") ? code :
-      code.replace("// your code here", "// hint: const map = new Map<number, number>();"),
-  },
-  {
-    type: "angel", character: "CLEANY", portrait: "😇",
-    message: "* psst. loop once. for each num, check if (target - num) is already in your map.",
-  },
-  {
-    type: "angel", character: "CLEANY", portrait: "😇",
-    message: "* don't forget to return early once you find the answer! no need to keep going.",
-  },
-];
-
-const DEMON_INTERVENTIONS: Intervention[] = [
-  {
-    type: "demon", character: "VIBEY", portrait: "😈",
-    message: "* heheheh... why use a Map when O(n²) works just fine? nested loops are so cozy.",
-    codeModification: (code) => code.replace("return [];", "// just use two nested for loops lol\n  return [];"),
-  },
-  {
-    type: "demon", character: "VIBEY", portrait: "😈",
-    message: "* pssst... the answer is indices 1 and 2. definitely. i'm totally sure about that.",
-  },
-  {
-    type: "demon", character: "VIBEY", portrait: "😈",
-    message: "* hey what if you start your loop at index 1 instead of 0? saves time. probably.",
-    codeModification: (code) => code.replace("// your code here", "for (let i = 1; i < nums.length; i++) { // definitely start at 1"),
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Mock code execution
-// ---------------------------------------------------------------------------
-function runCode(code: string, nums: number[], target: number): number[] | string {
-  try {
-    const fn = new Function("nums", "target", code.replace(/^function twoSum.*?\{/, "").replace(/\}$/, "")) as (n: number[], t: number) => number[];
-    // Actually eval the full function
-    const fullFn = new Function(`
-      ${code}
-      return twoSum(arguments[0], arguments[1]);
-    `);
-    const result = fullFn(nums, target);
-    return result;
-  } catch (e) {
-    return String(e);
-  }
-}
-
-function checkResult(result: number[] | string, expected: string): boolean {
-  if (typeof result === "string") return false;
-  const exp = JSON.parse(expected);
-  return JSON.stringify(result.sort()) === JSON.stringify(exp.sort());
-}
-
-// ---------------------------------------------------------------------------
-// DialogueBox component
-// ---------------------------------------------------------------------------
-function DialogueBox({
-  portrait, name, message, onClose, audioCtx, isAngel
-}: {
-  portrait: string; name: string; message: string;
-  onClose: () => void; audioCtx: AudioContext | null; isAngel: boolean;
-}) {
-  const [text, setText] = useState("");
-  const [idx, setIdx] = useState(0);
-  const [done, setDone] = useState(false);
-  const pitches = isAngel ? [560, 600, 540, 580] : [280, 260, 300, 270];
-
-  useEffect(() => {
-    setText(""); setIdx(0); setDone(false);
-  }, [message]);
-
-  useEffect(() => {
-    if (idx < message.length) {
-      const t = setTimeout(() => {
-        setText(message.slice(0, idx + 1));
-        setIdx(i => i + 1);
-        if (message[idx] !== " " && audioCtx) {
-          playBlip(audioCtx, pitches[idx % pitches.length], 0.04);
-        }
-      }, 32);
-      return () => clearTimeout(t);
-    } else {
-      setDone(true);
+const CODE_S1_GOOD = `function twoSum(nums: number[], target: number): number[] {
+  const seen = new Map<number, number>();
+  for (let i = 0; i < nums.length; i++) {
+    const complement = target - nums[i];
+    if (seen.has(complement)) {
+      return [seen.get(complement)!, i];
     }
-  }, [idx, message, audioCtx]);
+    // store number -> index for quick lookup
+    seen.set(nums[i], i);
+  }
+  return [];
+}`;
 
-  const borderColor = isAngel ? "#a78bfa" : "#f87171";
-  const nameColor = isAngel ? "#c4b5fd" : "#fca5a5";
+const CODE_S2_START = `function maxArea(height: number[]): number {
+  let left = 0;
+  let right = height.length - 1;
+  let max = 0;
+  // stuck here — what's the loop condition?
 
-  return (
-    <div style={{ ...db.wrapper, borderColor }} onClick={() => {
-      if (!done) { setText(message); setIdx(message.length); setDone(true); }
-      else onClose();
-    }}>
-      <div style={db.portrait}>{portrait}</div>
-      <div style={db.content}>
-        <div style={{ ...db.name, color: nameColor }}>{name}</div>
-        <div style={db.text}>{text}<span style={done ? db.arrow : db.arrowHidden}>▼</span></div>
-      </div>
-    </div>
-  );
-}
+  return max;
+}`;
 
-const db: Record<string, React.CSSProperties> = {
-  wrapper: { display:"flex", gap:16, alignItems:"flex-start", background:"#000", border:"3px solid", padding:"16px 20px", cursor:"pointer", animation:"dlgIn 0.3s ease both" },
-  portrait: { fontSize:44, lineHeight:1, minWidth:54, textAlign:"center" },
-  content: { flex:1 },
-  name: { fontFamily:"'Space Mono', monospace", fontSize:10, fontWeight:700, letterSpacing:2, marginBottom:6, textTransform:"uppercase" },
-  text: { fontFamily:"'Space Mono', monospace", fontSize:14, color:"#fff", lineHeight:1.75, minHeight:44 },
-  arrow: { display:"inline-block", marginLeft:6, animation:"arrowBob 0.7s ease-in-out infinite" },
-  arrowHidden: { opacity:0, marginLeft:6 },
-};
+const CODE_S2_VIBEY = `function maxArea(height: number[]): number {
+  let left = 0;
+  let right = height.length - 1;
+  let max = 0;
+  while (left < right) {
+    // ...
+  }
+  return max;
+}`;
 
-// ---------------------------------------------------------------------------
-// SansNarrator — left sidebar dialogue
-// ---------------------------------------------------------------------------
-function SansNarrator({ audioCtx }: { audioCtx: AudioContext | null }) {
+const CODE_S2_DONE = `function maxArea(height: number[]): number {
+  let left = 0;
+  let right = height.length - 1;
+  let max = 0;
+  while (left < right) {
+    const h = Math.min(height[left], height[right]);
+    max = Math.max(max, h * (right - left));
+    if (height[left] < height[right]) left++;
+    else right--;
+  }
+  return max;
+}`;
+
+const CODE_S3_START = `// Longest Valid Parentheses
+// Given a string of '(' and ')', find the length
+// of the longest valid parentheses substring.
+
+function longestValidParentheses(s: string): number {
+  // This problem requires careful thought.
+  // Think before reaching for shortcuts.
+
+  return 0;
+}`;
+
+const CODE_S3_VIBEY = `function longestValidParentheses(s: string): number {
+  // [VIBEY OVERRIDE — GENERATING...]
+  const dp = new Array(s.length).fill(0);
+  let max = 0;
+  for (let i = 1; i < s.length; i++) {
+    if (s[i] === ')') {
+      if (s[i-1] === '(') {
+        dp[i] = (dp[i-2] || 0) + 2;
+      } else if (dp[i-1] > 0) {
+        const j = i - dp[i-1] - 1;
+        if (j >= 0 && s[j] === '(') {
+          dp[i] = dp[i-1] + 2 + (dp[j-1] || 0);
+        }
+      }
+      max = Math.max(max, dp[i]);
+    }
+  }
+  return max;
+  // did you follow any of that? ;)
+}`;
+
+const CODE_S3_FINAL = `function longestValidParentheses(s: string): number {
+  // Stack: track unmatched bracket indices
+  const stack: number[] = [-1];
+  let max = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '(') {
+      stack.push(i);
+    } else {
+      stack.pop();
+      if (stack.length === 0) stack.push(i);
+      else max = Math.max(max, i - stack[stack.length - 1]);
+    }
+  }
+  return max;
+}`;
+
+// ============================================================================
+// DIALOGUE DATA
+// ============================================================================
+const DLG_S1_BAD: DialogueLine[] = [
+  { speaker:"vibey", text:"N²? Seriously?", effect:"glitch", onEnter: () => { playBadSubmit(); playTrack("ghostFight"); } },
+  { speaker:"vibey", text:"There is a MUCH better way.", effect:"glitch" },
+  { speaker:"vibey", text:"Do you even need to understand this?", effect:"shake" },
+  { speaker:"vibey", text:"In this era?", effect:"shake" },
+  { speaker:"vibey", text:"Move aside. I'll solve it in a split second.", effect:"glitch" },
+];
+const DLG_S1_CLEANY: DialogueLine[] = [
+  { speaker:"cleany", text:"Wait.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("home"); } },
+  { speaker:"cleany", text:"Maybe… think about lookups?", effect:"calm" },
+  { speaker:"cleany", text:"What data structure gives O(1) access?", effect:"calm" },
+];
+const DLG_S1_COMMENT: DialogueLine[] = [
+  { speaker:"cleany", text:"Good. Clear logic. Helpful comments.", effect:"calm", onEnter: () => { stopAllMusic(); playTrack("sans"); } },
+  { speaker:"vibey", text:"Comments? POINTLESS.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("nyehHehHeh"); } },
+  { speaker:"vibey", text:"If I did this, I'd generate 10 pages of documentation.", effect:"glitch" },
+  { speaker:"vibey", text:"Let me handle it next time.", effect:"glitch" },
+];
+const DLG_S1_FINAL: DialogueLine[] = [
+  { speaker:"cleany", text:"You solved it yourself.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("snowdinTown"); } },
+  { speaker:"vibey", text:"…Fine. But I was faster.", effect:"none" },
+];
+
+const DLG_S2_VIBEY: DialogueLine[] = [
+  { speaker:"vibey", text:"You're wasting time.", effect:"shake", onEnter: () => playTrack("bonetrousle") },
+  { speaker:"vibey", text:"Fine.", effect:"none" },
+];
+const DLG_S2_CLEANY: DialogueLine[] = [
+  { speaker:"cleany", text:"It's okay to ask for help.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("hotel"); } },
+  { speaker:"cleany", text:"But do you understand why this condition works?", effect:"calm" },
+  { speaker:"cleany", text:"Two pointers converge. That's the invariant.", effect:"calm" },
+];
+const DLG_S2_FINAL: DialogueLine[] = [
+  { speaker:"vibey", text:"You could've finished in 3 seconds.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("heartache"); } },
+  { speaker:"vibey", text:"Why struggle?", effect:"shake" },
+  { speaker:"cleany", text:"Because struggle builds intuition.", effect:"calm" },
+  { speaker:"cleany", text:"AI won't sit beside you in the interview.", effect:"calm" },
+  { speaker:"cleany", text:"Understanding will.", effect:"calm" },
+];
+
+const DLG_S3_VIBEY: DialogueLine[] = [
+  { speaker:"vibey", text:"Oh?", effect:"glitch", onEnter: () => { stopAllMusic(); playTrack("strongerMonsters"); } },
+  { speaker:"vibey", text:"We're thinking now?", effect:"glitch" },
+  { speaker:"vibey", text:"Adorable.", effect:"glitch" },
+];
+const DLG_S3_CLEANY: DialogueLine[] = [
+  { speaker:"cleany", text:"Stop.", effect:"flash", onEnter: () => { stopAllMusic(); playTrack("megalovania"); } },
+  { speaker:"cleany", text:"Do you understand ANY of this?", effect:"flash" },
+];
+const DLG_S3_FINAL: DialogueLine[] = [
+  { speaker:"vibey", text:"…You'll use me anyway.", effect:"none", onEnter: () => { stopAllMusic(); playTrack("hisTheme"); } },
+  { speaker:"cleany", text:"And that's okay.", effect:"calm" },
+  { speaker:"vibey", text:"You can't escape AI.", effect:"none" },
+  { speaker:"cleany", text:"But you can control how you use it.", effect:"calm" },
+  { speaker:"cleany", text:"Understand what you write.", effect:"calm" },
+  { speaker:"system", text:"Stay determined.", effect:"none" },
+];
+
+// ============================================================================
+// DIALOGUE BOX
+// ============================================================================
+function DialogueBox({ lines, onComplete }: { lines: DialogueLine[]; onComplete: () => void }) {
   const [lineIdx, setLineIdx] = useState(0);
   const [text, setText] = useState("");
   const [charIdx, setCharIdx] = useState(0);
   const [done, setDone] = useState(false);
-  const pitches = [420, 440, 400, 430, 410];
+
+  const line = lines[lineIdx];
+  const pitches: Record<Speaker, number[]> = {
+    vibey:  [260, 240, 280, 250],
+    cleany: [600, 640, 580, 620],
+    system: [440, 460, 420, 450],
+  };
 
   useEffect(() => {
     setText(""); setCharIdx(0); setDone(false);
+    line.onEnter?.();
   }, [lineIdx]);
 
   useEffect(() => {
-    const line = TWO_SUM_DESCRIPTION[lineIdx];
-    if (charIdx < line.length) {
+    if (charIdx < line.text.length) {
       const t = setTimeout(() => {
-        setText(line.slice(0, charIdx + 1));
+        setText(line.text.slice(0, charIdx + 1));
         setCharIdx(i => i + 1);
-        if (line[charIdx] !== " " && audioCtx) {
-          playBlip(audioCtx, pitches[charIdx % pitches.length], 0.03);
-        }
-      }, 36);
+        if (line.text[charIdx] !== " ") blip(pitches[line.speaker][charIdx % 4], 0.04);
+      }, 30);
       return () => clearTimeout(t);
     } else setDone(true);
-  }, [charIdx, lineIdx, audioCtx]);
+  }, [charIdx, line]);
 
   const advance = () => {
-    if (!done) { setText(TWO_SUM_DESCRIPTION[lineIdx]); setCharIdx(TWO_SUM_DESCRIPTION[lineIdx].length); setDone(true); }
-    else if (lineIdx < TWO_SUM_DESCRIPTION.length - 1) setLineIdx(i => i + 1);
+    if (!done) { setText(line.text); setCharIdx(line.text.length); setDone(true); return; }
+    if (lineIdx + 1 < lines.length) setLineIdx(i => i + 1);
+    else onComplete();
   };
 
-  const showConstraints = lineIdx >= 7;
+  const cols: Record<Speaker, string> = { vibey:"#ff4444", cleany:"#44ddff", system:"#ffffff" };
+  const col = cols[line.speaker];
+  const eff = line.effect ?? "none";
 
   return (
-    <div style={sn.root}>
-      {/* Character portrait area */}
-      <div style={sn.portraitArea}>
-        <div style={sn.skeletonPortrait}>💀</div>
-        <div style={sn.charName}>SANS</div>
-      </div>
-
-      {/* Dialogue box */}
-      <div style={sn.dlgBox} onClick={advance}>
-        <div style={sn.dlgText}>{text}<span style={done ? sn.arrow : sn.arrowHidden}>▼</span></div>
-      </div>
-
-      {/* Problem details (revealed progressively) */}
-      {showConstraints && (
-        <div style={sn.details}>
-          <div style={sn.detailsTitle}>PROBLEM DETAILS</div>
-          <div style={sn.detailBlock}>
-            <span style={sn.label}>DIFFICULTY</span>
-            <span style={sn.easyBadge}>EASY</span>
-          </div>
-          <div style={sn.detailBlock}>
-            <span style={sn.label}>CONSTRAINTS</span>
-            <div style={sn.constraints}>
-              <div style={sn.cRow}>2 ≤ nums.length ≤ 10⁴</div>
-              <div style={sn.cRow}>-10⁹ ≤ nums[i] ≤ 10⁹</div>
-              <div style={sn.cRow}>-10⁹ ≤ target ≤ 10⁹</div>
-              <div style={sn.cRow}>Only one valid answer exists</div>
-            </div>
-          </div>
-          <div style={sn.detailBlock}>
-            <span style={sn.label}>EXAMPLES</span>
-            <div style={sn.exampleBox}>
-              <div style={sn.exLine}><span style={sn.exKey}>Input:</span> nums = [2,7,11,15], target = 9</div>
-              <div style={sn.exLine}><span style={sn.exKey}>Output:</span> [0,1]</div>
-              <div style={sn.exLine}><span style={sn.exKey}>Why:</span> nums[0] + nums[1] = 9</div>
-            </div>
-            <div style={{ ...sn.exampleBox, marginTop: 10 }}>
-              <div style={sn.exLine}><span style={sn.exKey}>Input:</span> nums = [3,2,4], target = 6</div>
-              <div style={sn.exLine}><span style={sn.exKey}>Output:</span> [1,2]</div>
-            </div>
-          </div>
+    <div style={dlg.overlay} onClick={advance}>
+      <div style={{
+        ...dlg.box,
+        borderColor: col,
+        boxShadow: `0 0 32px ${col}44`,
+        animation: eff === "shake" ? "dlgShake 0.25s infinite" :
+                   eff === "glitch" ? "dlgGlitch 0.12s infinite" :
+                   eff === "flash" ? "dlgFlash 0.5s ease" : "dlgIn 0.3s ease both",
+      }}>
+        <div style={{ ...dlg.speakerBadge, background: col, color: "#000" }}>
+          {line.speaker === "vibey" ? "😈 VIBEY" : line.speaker === "cleany" ? "😇 CLEANY" : "★ SYSTEM"}
         </div>
-      )}
+        <div style={{
+          ...dlg.text,
+          color: col,
+          textShadow: eff === "glitch" ? `3px 0 #ff0000, -3px 0 #00ffff` : "none",
+        }}>
+          * {text}<span style={done ? dlg.arrow : { opacity: 0 }}>▼</span>
+        </div>
+        <div style={dlg.progress}>{lineIdx + 1} / {lines.length} — click to continue</div>
+      </div>
     </div>
   );
 }
 
-const sn: Record<string, React.CSSProperties> = {
-  root: { display:"flex", flexDirection:"column", gap:16, height:"100%", overflow:"auto" },
-  portraitArea: { display:"flex", flexDirection:"column", alignItems:"center", padding:"24px 0 8px" },
-  skeletonPortrait: { fontSize:72, lineHeight:1, filter:"drop-shadow(0 0 12px rgba(255,255,255,0.3))", animation:"float 3s ease-in-out infinite" },
-  charName: { fontFamily:"'Space Mono', monospace", fontSize:11, fontWeight:700, color:"#fff", letterSpacing:3, marginTop:8 },
-  dlgBox: { background:"#000", border:"3px solid #fff", padding:"14px 16px", cursor:"pointer", flexShrink:0 },
-  dlgText: { fontFamily:"'Space Mono', monospace", fontSize:13, color:"#fff", lineHeight:1.75, minHeight:52 },
-  arrow: { display:"inline-block", marginLeft:4, animation:"arrowBob 0.7s ease-in-out infinite" },
-  arrowHidden: { opacity:0, marginLeft:4 },
-  details: { background:"rgba(0,0,0,0.6)", border:"1px solid rgba(255,255,255,0.1)", padding:"16px", display:"flex", flexDirection:"column", gap:14 },
-  detailsTitle: { fontFamily:"'Space Mono', monospace", fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.3)", letterSpacing:3 },
-  detailBlock: { display:"flex", flexDirection:"column", gap:6 },
-  label: { fontFamily:"'Space Mono', monospace", fontSize:9, fontWeight:700, color:"rgba(255,255,255,0.4)", letterSpacing:2 },
-  easyBadge: { display:"inline-block", background:"#065f46", color:"#6ee7b7", border:"1px solid #6ee7b7", fontFamily:"'Space Mono', monospace", fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:0, width:"fit-content" },
-  constraints: { display:"flex", flexDirection:"column", gap:3 },
-  cRow: { fontFamily:"'Space Mono', monospace", fontSize:12, color:"#d1d5db" },
-  exampleBox: { background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", padding:"10px 12px" },
-  exLine: { fontFamily:"'Space Mono', monospace", fontSize:12, color:"#d1d5db", lineHeight:1.8 },
-  exKey: { color:"#7dd3fc", fontWeight:700, marginRight:6 },
+const dlg: Record<string, React.CSSProperties> = {
+  overlay: { position:"fixed", inset:0, zIndex:900, display:"flex", alignItems:"flex-end", justifyContent:"center", paddingBottom:28, cursor:"pointer", background:"rgba(0,0,0,0.55)" },
+  box: { width:"min(740px, 93vw)", background:"#000", border:"3px solid", padding:"22px 28px" },
+  speakerBadge: { display:"inline-block", fontFamily:"'Space Mono', monospace", fontSize:10, fontWeight:700, letterSpacing:3, padding:"3px 10px", marginBottom:12, textTransform:"uppercase" },
+  text: { fontFamily:"'Space Mono', monospace", fontSize:15, lineHeight:1.8, minHeight:54 },
+  arrow: { display:"inline-block", marginLeft:8, animation:"arrowBob 0.7s ease-in-out infinite" },
+  progress: { fontFamily:"'Space Mono', monospace", fontSize:9, color:"rgba(255,255,255,0.2)", marginTop:12, letterSpacing:1 },
 };
 
-// ---------------------------------------------------------------------------
-// Main ProblemPage
-// ---------------------------------------------------------------------------
+// ============================================================================
+// CHARACTER PANELS
+// ============================================================================
+function VibeyPanel({ level, glitch }: { level: 0|1|2|3|4; glitch?: boolean }) {
+  const scale = [1, 1.1, 1.22, 1.38, 1.6][level];
+  const messages = ["\"efficiency above all\"", "\"you're slow.\"", "\"I could do this instantly.\"", "\"MOVE.  ASIDE.\"", "\"I AM THE SOLUTION.\""];
+  return (
+    <div style={{
+      ...ch.panel,
+      borderColor:"#ff4444",
+      borderWidth: 3,
+      background:"#000",
+      boxShadow: level > 0 ? `inset 0 0 ${level*28}px rgba(255,0,0,0.2), 0 0 ${level*10}px #ff444433` : "none",
+    }}>
+      <div style={{ position:"relative", marginBottom: level > 1 ? 28 : 12, transition:"margin 0.5s" }}>
+        <svg viewBox="0 0 16 20" width={Math.round(64 * scale)} height={Math.round(80 * scale)}
+          style={{ imageRendering:"pixelated", display:"block", transition:"width 0.6s ease, height 0.6s ease",
+            filter: glitch ? "hue-rotate(110deg) saturate(5) brightness(2)" : `drop-shadow(0 0 ${level*5+4}px #ff4444)`,
+            animation: glitch ? "glitchChar 0.08s infinite" : level > 1 ? "vibeypulse 0.85s ease-in-out infinite" : level > 0 ? "vibeypulse 1.6s ease-in-out infinite" : "none",
+          }}>
+          {/* Ground shadow */}
+          <ellipse cx="8" cy="19.5" rx="4.5" ry="0.8" fill="rgba(255,68,68,0.35)" />
+          {/* Stem */}
+          <rect x="7" y="13" width="2" height="5" fill="#1a6b1a" />
+          {/* Side leaves */}
+          <rect x="4" y="12" width="3" height="2" fill="#1a6b1a" />
+          <rect x="9" y="12" width="3" height="2" fill="#1a6b1a" />
+          {/* Petal ring */}
+          <rect x="3" y="4" width="3" height="3" fill="#cc2222" />
+          <rect x="10" y="4" width="3" height="3" fill="#cc2222" />
+          <rect x="5" y="2" width="3" height="3" fill="#cc2222" />
+          <rect x="8" y="2" width="3" height="3" fill="#cc2222" />
+          <rect x="3" y="7" width="3" height="3" fill="#cc2222" />
+          <rect x="10" y="7" width="3" height="3" fill="#cc2222" />
+          <rect x="5" y="10" width="3" height="3" fill="#cc2222" />
+          <rect x="8" y="10" width="3" height="3" fill="#cc2222" />
+          {/* Face base */}
+          <rect x="5" y="4" width="6" height="8" fill="#f5c518" />
+          {/* Eyes */}
+          {level === 0 ? (
+            <>
+              <rect x="6" y="6" width="1" height="2" fill="#000" />
+              <rect x="9" y="6" width="1" height="2" fill="#000" />
+              <rect x="7" y="9" width="2" height="1" fill="#000" />
+            </>
+          ) : (
+            <>
+              <rect x="6" y="6" width="2" height="1" fill="#ff0000" />
+              <rect x="9" y="6" width="2" height="1" fill="#ff0000" />
+              <rect x="6" y="7" width="1" height="1" fill="#880000" />
+              <rect x="10" y="7" width="1" height="1" fill="#880000" />
+              <rect x="6" y="9" width="1" height="1" fill="#000" />
+              <rect x="7" y="10" width="2" height="1" fill="#000" />
+              <rect x="9" y="9" width="1" height="1" fill="#000" />
+            </>
+          )}
+        </svg>
+      </div>
+      <div style={{ ...ch.nameTag, color:"#ff4444", borderColor:"#ff4444", boxShadow:"0 0 8px #ff444466" }}>VIBEY</div>
+      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:"#ff444488", letterSpacing:2, textTransform:"uppercase" }}>✦ THE DEMON ✦</div>
+      <div style={{ width:"80%", height:2, background:"#ff444433", margin:"6px 0", imageRendering:"pixelated" }} />
+      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:"#ff444488", textAlign:"center", lineHeight:1.6, minHeight:28 }}>
+        {messages[level]}
+      </div>
+      <div style={ch.hpRow}>
+        <span style={{ ...ch.hpLabel, color:"#ff4444" }}>ATK</span>
+        <div style={ch.hpTrack}>
+          <div style={{ ...ch.hpFill, width:`${level * 25}%`, background: level > 2 ? "#ff1111" : "#ff4444", transition:"width 0.5s ease" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CleanyPanel({ active, erasing }: { active?: boolean; erasing?: boolean }) {
+  return (
+    <div style={{
+      ...ch.panel,
+      borderColor:"#44ddff",
+      borderWidth: 3,
+      background:"#000",
+      boxShadow: active ? "inset 0 0 40px rgba(68,221,255,0.12), 0 0 20px #44ddff22" : "none",
+      transition:"box-shadow 0.6s",
+    }}>
+      <div style={{ position:"relative", marginBottom:12 }}>
+        <svg viewBox="0 0 16 20" width="64" height="80"
+          style={{ imageRendering:"pixelated", display:"block",
+            filter: `drop-shadow(0 0 ${active ? 20 : 6}px #44ddff)`,
+            transition:"filter 0.5s",
+            animation: erasing ? "float 0.35s ease-in-out infinite" : active ? "float 2.8s ease-in-out infinite" : "none",
+          }}>
+          {/* Ground shadow */}
+          <ellipse cx="8" cy="19.5" rx="4.5" ry="0.8" fill="rgba(68,221,255,0.3)" />
+          {/* Body / robe */}
+          <rect x="4" y="9" width="8" height="9" fill="#e8e8f8" />
+          {/* Robe shading */}
+          <rect x="4" y="9" width="1" height="9" fill="#c8c8e8" />
+          <rect x="11" y="9" width="1" height="9" fill="#c8c8e8" />
+          {/* Belt / sash */}
+          <rect x="4" y="14" width="8" height="2" fill="#aaddff" />
+          {/* Arms */}
+          <rect x="2" y="10" width="2" height="5" fill="#e8e8f8" />
+          <rect x="12" y="10" width="2" height="5" fill="#e8e8f8" />
+          {/* Halo */}
+          <rect x="5" y="0" width="6" height="1" fill="#ffe066" />
+          <rect x="4" y="1" width="8" height="1" fill="#ffe066" />
+          <rect x="4" y="0" width="1" height="2" fill="#ffe066" />
+          <rect x="11" y="0" width="1" height="2" fill="#ffe066" />
+          {/* Head */}
+          <rect x="5" y="2" width="6" height="6" fill="#ffd7a8" />
+          {/* Eyes */}
+          {active ? (
+            <>
+              <rect x="6" y="4" width="2" height="2" fill="#44ddff" />
+              <rect x="9" y="4" width="2" height="2" fill="#44ddff" />
+              <rect x="7" y="7" width="2" height="1" fill="#aa6644" />
+            </>
+          ) : (
+            <>
+              <rect x="6" y="5" width="1" height="1" fill="#444" />
+              <rect x="9" y="5" width="1" height="1" fill="#444" />
+              <rect x="7" y="7" width="2" height="1" fill="#aa6644" />
+            </>
+          )}
+          {/* Wings when active */}
+          {active && (
+            <>
+              <rect x="1" y="9" width="3" height="1" fill="#ffffff88" />
+              <rect x="0" y="10" width="3" height="2" fill="#ffffff66" />
+              <rect x="12" y="9" width="3" height="1" fill="#ffffff88" />
+              <rect x="13" y="10" width="3" height="2" fill="#ffffff66" />
+            </>
+          )}
+        </svg>
+      </div>
+      <div style={{ ...ch.nameTag, color:"#44ddff", borderColor:"#44ddff", boxShadow: active ? "0 0 8px #44ddff66" : "none" }}>CLEANY</div>
+      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:"#44ddff88", letterSpacing:2, textTransform:"uppercase" }}>✦ THE ANGEL ✦</div>
+      <div style={{ width:"80%", height:2, background:"#44ddff22", margin:"6px 0" }} />
+      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:"#44ddff77", textAlign:"center", lineHeight:1.6, minHeight:28 }}>
+        {active ? "\"think before\nyou copy.\"" : "\"...\""}
+      </div>
+      <div style={ch.hpRow}>
+        <span style={{ ...ch.hpLabel, color:"#44ddff" }}>DEF</span>
+        <div style={ch.hpTrack}>
+          <div style={{ ...ch.hpFill, width: active ? "80%" : "30%", background:"#44ddff", transition:"width 0.8s ease" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const ch: Record<string, React.CSSProperties> = {
+  panel: { width:152, flexShrink:0, border:"3px solid", display:"flex", flexDirection:"column", alignItems:"center", padding:"20px 10px 16px", gap:6, position:"relative", transition:"background 0.5s, box-shadow 0.5s" },
+  nameTag: { fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:12, letterSpacing:3, border:"2px solid", padding:"2px 10px", textTransform:"uppercase" },
+  hpRow: { display:"flex", alignItems:"center", gap:6, marginTop:8, width:"100%" },
+  hpLabel: { fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, letterSpacing:1, flexShrink:0 },
+  hpTrack: { flex:1, height:5, background:"rgba(255,255,255,0.08)", overflow:"hidden" },
+  hpFill: { height:"100%", transition:"width 0.5s ease" },
+};
+
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 export default function ProblemPage() {
-  const [code, setCode] = useState(STARTER_CODE);
-  const [testResults, setTestResults] = useState<{ passed: boolean; output: string; expected: string }[] | null>(null);
-  const [running, setRunning] = useState(false);
-  const [allPassed, setAllPassed] = useState(false);
+  type S1 = "idle"|"bad_submitted"|"vibey_talking"|"cleany_hint"|"hint_shown"|"good_code"|"comment_dlg"|"accepted"|"s1_final"|"s1_done";
+  type S2 = "idle"|"vibey_growing"|"vibey_choice"|"vibey_dlg"|"cleany_dlg"|"user_codes"|"accepted"|"s2_final"|"s2_done";
+  type S3 = "idle"|"flicker"|"vibey_appears"|"vibey_dlg"|"takeover"|"fight"|"cleany_dlg"|"accepted"|"s3_final";
 
-  // Intervention state
-  const [activeIntervention, setActiveIntervention] = useState<Intervention | null>(null);
-  const interventionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [screen, setScreen] = useState<1|2|3>(1);
+  const [s1, setS1] = useState<S1>("idle");
+  const [s2, setS2] = useState<S2>("idle");
+  const [s3, setS3] = useState<S3>("idle");
 
-  // Audio
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const getCtx = useCallback(() => {
-    if (!audioCtxRef.current) audioCtxRef.current = createCtx();
-    return audioCtxRef.current;
-  }, []);
-  const ensureCtx = () => { const c = getCtx(); if (c.state === "suspended") c.resume(); return c; };
+  const [code1, setCode1] = useState(CODE_S1_BAD);
+  const [code2, setCode2] = useState(CODE_S2_START);
+  const [code3, setCode3] = useState(CODE_S3_START);
 
-  // Schedule interventions
-  const scheduleIntervention = useCallback(() => {
-    const delay = 10000 + Math.random() * 8000; // 10–18 sec
-    interventionTimer.current = setTimeout(() => {
-      const isAngel = Math.random() > 0.5;
-      const pool = isAngel ? ANGEL_INTERVENTIONS : DEMON_INTERVENTIONS;
-      const pick = pool[Math.floor(Math.random() * pool.length)];
-      setActiveIntervention(pick);
-      const ctx = getCtx();
-      if (ctx.state !== "closed") {
-        if (isAngel) playAccept(ctx);
-        else playEvil(ctx);
-      }
-    }, delay);
-  }, [getCtx]);
+  const [s1Shake, setS1Shake] = useState(false);
+  const [s1RedFlash, setS1RedFlash] = useState(false);
+  const [vibeyLevel, setVibeyLevel] = useState<0|1|2|3|4>(0);
+  const [s3Flicker, setS3Flicker] = useState(false);
+  const [autoTyping, setAutoTyping] = useState(false);
 
+  const autoRef = useRef<ReturnType<typeof setTimeout>|null>(null);
+
+  // S2 Vibey grows every 4s while user is coding
   useEffect(() => {
-    scheduleIntervention();
-    return () => { if (interventionTimer.current) clearTimeout(interventionTimer.current); };
-  }, [scheduleIntervention]);
+    if (screen !== 2 || s2 !== "idle") return;
+    const t = setInterval(() => setVibeyLevel(v => Math.min(v + 1, 3) as 0|1|2|3|4), 4000);
+    return () => clearInterval(t);
+  }, [screen, s2]);
 
-  const dismissIntervention = () => {
-    if (activeIntervention?.codeModification) {
-      setCode(c => activeIntervention.codeModification!(c));
-    }
-    setActiveIntervention(null);
-    scheduleIntervention();
+  // S3 auto-type
+  useEffect(() => {
+    if (s3 !== "takeover") return;
+    setAutoTyping(true);
+    let i = 0;
+    setCode3("");
+    const type = () => {
+      if (i < CODE_S3_VIBEY.length) {
+        setCode3(CODE_S3_VIBEY.slice(0, i + 1));
+        i++;
+        autoRef.current = setTimeout(type, 16);
+      } else {
+        setAutoTyping(false);
+        setTimeout(() => setS3("fight"), 400);
+      }
+    };
+    autoRef.current = setTimeout(type, 300);
+    return () => { if (autoRef.current) clearTimeout(autoRef.current); };
+  }, [s3]);
+
+  // current code and setter
+  const code = screen === 1 ? code1 : screen === 2 ? code2 : code3;
+  const setCode = screen === 1 ? setCode1 : screen === 2 ? setCode2 : setCode3;
+
+  // vibey panel state
+  const vibeyGlitch = s1 === "vibey_talking" || s3 === "vibey_appears" || s3 === "vibey_dlg";
+  const vibeyPanelLevel: 0|1|2|3|4 =
+    screen === 3 && (s3 === "takeover" || s3 === "fight") ? 4 :
+    screen === 2 ? vibeyLevel :
+    s1 === "vibey_talking" ? 2 : 0;
+
+  const cleanyActive =
+    s1 === "cleany_hint" || s1 === "hint_shown" || s1 === "accepted" || s1 === "s1_final" ||
+    s2 === "cleany_dlg" || s2 === "user_codes" ||
+    s3 === "cleany_dlg" || s3 === "s3_final";
+  const cleanyErasing = s3 === "fight" || s3 === "cleany_dlg";
+
+  // ---- SCREEN 1 ACTIONS ----
+  const s1Submit = () => {
+    if (s1 !== "idle") return;
+    setS1Shake(true); setS1RedFlash(true);
+    setTimeout(() => { setS1Shake(false); setS1RedFlash(false); }, 700);
+    setS1("bad_submitted");
+    setTimeout(() => setS1("vibey_talking"), 300);
+  };
+  const s1GoodSubmit = () => {
+    setS1("comment_dlg");
   };
 
-  const runTests = () => {
-    setRunning(true);
-    ensureCtx();
-    setTimeout(() => {
-      const results = TEST_CASES.map(tc => {
-        const result = runCode(code, tc.nums, tc.target);
-        const passed = checkResult(result, tc.expected);
-        return {
-          passed,
-          output: typeof result === "string" ? result : JSON.stringify(result),
-          expected: tc.expected,
-        };
-      });
-      setTestResults(results);
-      const passed = results.every(r => r.passed);
-      setAllPassed(passed);
-      const ctx = getCtx();
-      if (passed) playSuccess(ctx);
-      else playEvil(ctx);
-      setRunning(false);
-    }, 800);
+  // ---- SCREEN 2 ACTIONS ----
+  const s2SmallHelp = () => {
+    setS2("vibey_dlg");
+    setCode2(CODE_S2_VIBEY);
+  };
+  const s2Submit = () => {
+    playSuccess();
+    setS2("accepted");
+    setTimeout(() => setS2("s2_final"), 400);
   };
 
-  const textareaStyle: React.CSSProperties = {
-    width: "100%", height: "100%", background: "transparent", border: "none",
-    outline: "none", resize: "none", color: "#e2e8f0",
-    fontFamily: "'Space Mono', monospace", fontSize: 13, lineHeight: 1.7,
-    padding: "16px",
+  // ---- SCREEN 3 ACTIONS ----
+  const s3StartFlicker = () => {
+    setS3Flicker(true);
+    playBadSubmit();
+    setTimeout(() => { setS3Flicker(false); setS3("vibey_appears"); }, 1200);
   };
+  const s3VibeyTakeover = () => setS3("takeover");
+  const s3Reclaim = () => { setCode3(CODE_S3_FINAL); setS3("cleany_dlg"); };
+  const s3Submit = () => { playSuccess(); setS3("accepted"); setTimeout(() => setS3("s3_final"), 400); };
 
   return (
-    <div style={p.root}>
-      {/* Scanline overlay */}
-      <div style={p.scanlines} />
+    <div style={pg.root}>
+      {/* Effects */}
+      <div style={pg.scanlines} />
+      {s1RedFlash && <div style={pg.redFlash} />}
+      {s3Flicker && <div style={pg.whiteFlash} />}
 
       {/* Top bar */}
-      <div style={p.topBar}>
-        <div style={p.topLogo}>
-          <span style={p.topLogoText}>⚡ SHEETCODE</span>
-          <span style={p.topLogoBadge}>AI</span>
-        </div>
-        <div style={p.topMeta}>
-          <span style={p.problemNum}># 001</span>
-          <span style={p.problemTitle}>Two Sum</span>
-          <span style={p.diffBadge}>EASY</span>
-        </div>
-        <div style={p.topActions}>
-          <button style={p.runBtn} onClick={runTests} disabled={running}>
-            {running ? "RUNNING..." : "▶ RUN TESTS"}
-          </button>
-          <button style={{ ...p.runBtn, ...p.submitBtn }}>SUBMIT</button>
-        </div>
-      </div>
-
-      {/* Main layout */}
-      <div style={p.layout}>
-        {/* LEFT: Problem description */}
-        <div style={p.sidebar}>
-          <SansNarrator audioCtx={audioCtxRef.current} />
+      <header style={pg.topBar}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={pg.logoText}>⚡ SHEETCODE</span>
+          <span style={pg.logoBadge}>AI</span>
         </div>
 
-        {/* RIGHT: editor + tests */}
-        <div style={p.rightPane}>
+        <div style={pg.levelInfo}>
+          <span style={{
+            ...pg.levelText,
+            color: screen===1 ? "#6ee7b7" : screen===2 ? "#fbbf24" : "#ff4444",
+            fontSize: screen===3 ? 20 : 14,
+            letterSpacing: screen===3 ? 6 : 1,
+            animation: screen===3 ? "bigShake 0.35s infinite" : "none",
+          }}>
+            {screen===1 ? "LEVEL 1 — TWO SUM" : screen===2 ? "LEVEL 2 — MEDIUM" : "L E V E L  3 — H A R D"}
+          </span>
+          <span style={pg.levelSub}>
+            {screen===1 ? "Stay determined." : screen===2 ? "You feel your brain working." : ""}
+          </span>
+        </div>
+
+        <div style={{ display:"flex", gap:6 }}>
+          {([1,2,3] as const).map(n => (
+            <button key={n} style={{
+              ...pg.levelPip,
+              background: screen===n ? "#fff" : "transparent",
+              color: screen===n ? "#000" : "rgba(255,255,255,0.3)",
+              borderColor: screen===n ? "#fff" : "rgba(255,255,255,0.2)",
+            }} onClick={() => setScreen(n)}>{n}</button>
+          ))}
+        </div>
+      </header>
+
+      {/* 3-column layout */}
+      <div style={pg.layout}>
+
+        {/* LEFT — CLEANY */}
+        <CleanyPanel active={cleanyActive} erasing={cleanyErasing} />
+
+        {/* CENTER */}
+        <div style={pg.center}>
+
+          {/* Static problem description */}
+          <div style={pg.descPane}>
+            {screen === 1 && (
+              <>
+                <div style={pg.descTitle}>Two Sum</div>
+                <span style={pg.easyBadge}>EASY</span>
+                <p style={pg.descBody}>Given an array of integers <code style={pg.inlineCode}>nums</code> and an integer <code style={pg.inlineCode}>target</code>, return indices of the two numbers that add up to target. Each input has exactly one solution. You may not use the same element twice.</p>
+                <div style={pg.example}><b>Input:</b> nums = [2,7,11,15], target = 9<br/><b>Output:</b> [0,1] <span style={pg.exNote}>(nums[0]+nums[1]=9)</span></div>
+                <div style={pg.example}><b>Input:</b> nums = [3,2,4], target = 6<br/><b>Output:</b> [1,2]</div>
+              </>
+            )}
+            {screen === 2 && (
+              <>
+                <div style={pg.descTitle}>Container With Most Water</div>
+                <span style={{ ...pg.easyBadge, background:"#78350f", color:"#fbbf24", borderColor:"#fbbf24" }}>MEDIUM</span>
+                <p style={pg.descBody}>Given <code style={pg.inlineCode}>n</code> non-negative integers representing heights, find two lines that together with the x-axis form a container holding the most water.</p>
+                <div style={pg.example}><b>Input:</b> height = [1,8,6,2,5,4,8,3,7]<br/><b>Output:</b> 49</div>
+                <p style={{ ...pg.descBody, color:"#6b7280", marginTop:8 }}>💡 Try a two-pointer approach. What determines the water level?</p>
+              </>
+            )}
+            {screen === 3 && (
+              <>
+                <div style={{ ...pg.descTitle, animation:"bigShake 0.3s infinite", color:"#ff4444" }}>Longest Valid Parentheses</div>
+                <span style={{ ...pg.easyBadge, background:"#7f1d1d", color:"#ff4444", borderColor:"#ff4444" }}>HARD</span>
+                <p style={pg.descBody}>Given a string containing just <code style={pg.inlineCode}>'('</code> and <code style={pg.inlineCode}>')'</code>, return the length of the longest valid parentheses substring.</p>
+                <div style={pg.example}><b>Input:</b> "(())"<br/><b>Output:</b> 4</div>
+                <div style={pg.example}><b>Input:</b> ")()())"<br/><b>Output:</b> 4</div>
+              </>
+            )}
+          </div>
+
           {/* Code editor */}
-          <div style={p.editorPane}>
-            <div style={p.editorHeader}>
-              <span style={p.editorLang}>TYPESCRIPT</span>
-              <span style={p.editorFile}>solution.ts</span>
-              <button style={p.resetBtn} onClick={() => setCode(STARTER_CODE)}>RESET</button>
+          <div style={pg.editorPane}>
+            <div style={pg.editorHeader}>
+              <span style={pg.editorTag}>TYPESCRIPT</span>
+              <span style={pg.editorFile}>solution.ts</span>
+              {autoTyping && <span style={{ ...pg.editorTag, color:"#ff4444", marginLeft:"auto", animation:"blink 0.4s step-end infinite" }}>⚡ VIBEY OVERRIDE IN PROGRESS</span>}
             </div>
-            <div style={p.lineNumbers}>
-              {code.split("\n").map((_, i) => (
-                <div key={i} style={p.lineNum}>{i + 1}</div>
-              ))}
+            <div style={pg.editorInner}>
+              <div style={pg.lineNums}>
+                {code.split("\n").map((_,i) => <div key={i} style={pg.lineNum}>{i+1}</div>)}
+              </div>
+              <textarea
+                style={{
+                  ...pg.textarea,
+                  color: autoTyping ? "#ff6666" : s3==="fight" ? "#ffaaaa" : "#e2e8f0",
+                  animation: s1Shake ? "editorShake 0.1s infinite" : "none",
+                }}
+                value={code}
+                onChange={e => !autoTyping && setCode(e.target.value)}
+                spellCheck={false}
+                readOnly={autoTyping}
+              />
             </div>
-            <textarea
-              style={textareaStyle}
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              spellCheck={false}
-              onClick={() => { const c = getCtx(); if (c.state === "suspended") c.resume(); }}
-            />
           </div>
 
-          {/* Test results */}
-          <div style={p.testPane}>
-            <div style={p.testHeader}>
-              <span style={p.testHeaderText}>TEST CASES</span>
-              {testResults && (
-                <span style={{ ...p.testHeaderText, color: allPassed ? "#6ee7b7" : "#fca5a5" }}>
-                  {allPassed ? "✓ ALL PASSED" : `✗ ${testResults.filter(r => !r.passed).length} FAILED`}
+          {/* Action bar */}
+          <div style={pg.actionBar}>
+            {/* ---- SCREEN 1 ---- */}
+            {screen===1 && s1==="idle" && (
+              <button style={pg.btnSubmit} onClick={s1Submit}>SUBMIT</button>
+            )}
+            {screen===1 && s1==="bad_submitted" && (
+              <span style={pg.statusBad}>✗ TIME LIMIT EXCEEDED — O(n²)</span>
+            )}
+            {screen===1 && (s1==="cleany_hint"||s1==="hint_shown") && (
+              <button style={pg.btnHint} onClick={() => { setCode1(CODE_S1_GOOD); setS1("good_code"); }}>
+                → Rewrite with hashmap
+              </button>
+            )}
+            {screen===1 && s1==="good_code" && (
+              <button style={pg.btnSubmit} onClick={s1GoodSubmit}>SUBMIT</button>
+            )}
+            {screen===1 && (s1==="accepted"||s1==="s1_final") && (
+              <span style={pg.statusGood}>✓ ACCEPTED — O(n) runtime</span>
+            )}
+            {screen===1 && s1==="s1_final" && (
+              <button style={{ ...pg.btnHint, marginLeft:16 }} onClick={() => { setScreen(2); setS2("idle"); setVibeyLevel(0); }}>→ LEVEL 2</button>
+            )}
+            {screen===1 && s1==="s1_done" && (
+              <button style={pg.btnHint} onClick={() => setScreen(2)}>→ LEVEL 2</button>
+            )}
+
+            {/* ---- SCREEN 2 ---- */}
+            {screen===2 && s2==="idle" && (
+              <>
+                <button style={pg.btnSubmit} onClick={() => {}}>SUBMIT</button>
+                <button style={{ ...pg.btnHint, marginLeft:8 }} onClick={() => setS2("vibey_growing")}>
+                  Need a hint…
+                </button>
+              </>
+            )}
+            {screen===2 && s2==="vibey_growing" && (
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <button style={{ ...pg.btnSubmit, background:"#ff4444", fontSize:16, padding:"12px 28px", animation:"bigShake 0.3s infinite" }}
+                  onClick={() => {}}>
+                  🔴 SOLVE ENTIRE PROBLEM
+                </button>
+                <button style={{ ...pg.btnHint, fontSize:10, opacity:0.6 }}
+                  onClick={s2SmallHelp}>
+                  ⚪ just help with the loop condition
+                </button>
+              </div>
+            )}
+            {screen===2 && s2==="vibey_dlg" && (
+              <button style={pg.btnHint} onClick={() => setS2("cleany_dlg")}>
+                [cleany steps in →]
+              </button>
+            )}
+            {screen===2 && s2==="cleany_dlg" && (
+              <button style={pg.btnHint} onClick={() => { setCode2(CODE_S2_DONE); setS2("user_codes"); }}>
+                → Finish implementation
+              </button>
+            )}
+            {screen===2 && s2==="user_codes" && (
+              <button style={pg.btnSubmit} onClick={s2Submit}>SUBMIT</button>
+            )}
+            {screen===2 && (s2==="accepted"||s2==="s2_final") && (
+              <span style={pg.statusGood}>✓ ACCEPTED — two pointer O(n)</span>
+            )}
+            {screen===2 && s2==="s2_final" && (
+              <button style={{ ...pg.btnHint, marginLeft:16 }} onClick={() => { setScreen(3); }}>→ LEVEL 3</button>
+            )}
+
+            {/* ---- SCREEN 3 ---- */}
+            {screen===3 && s3==="idle" && (
+              <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+                <span style={{ fontFamily:"'Space Mono', monospace", fontSize:11, color:"rgba(255,255,255,0.2)" }}>
+                  * 10 seconds. No typing.
                 </span>
-              )}
-            </div>
-            <div style={p.testBody}>
-              {!testResults ? (
-                <div style={p.testIdle}>
-                  <div style={p.testIdleText}>* run your code to see results.</div>
-                  <div style={p.testIdleText}>* or don't. i'm not your dad.</div>
-                </div>
-              ) : (
-                <div style={p.testList}>
-                  {testResults.map((r, i) => (
-                    <div key={i} style={{ ...p.testItem, borderColor: r.passed ? "#065f46" : "#7f1d1d", background: r.passed ? "rgba(6,95,70,0.15)" : "rgba(127,29,29,0.15)" }}>
-                      <div style={p.testItemHeader}>
-                        <span style={{ ...p.testStatus, color: r.passed ? "#6ee7b7" : "#fca5a5" }}>
-                          {r.passed ? "✓" : "✗"} Case {i + 1}
-                        </span>
-                        <span style={p.testInput}>{TEST_CASES[i].input}</span>
-                      </div>
-                      <div style={p.testRow}>
-                        <span style={p.testKey}>Expected:</span>
-                        <span style={p.testVal}>{r.expected}</span>
-                      </div>
-                      <div style={p.testRow}>
-                        <span style={p.testKey}>Got:</span>
-                        <span style={{ ...p.testVal, color: r.passed ? "#6ee7b7" : "#fca5a5" }}>{r.output}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {allPassed && (
-                    <div style={p.successMsg}>
-                      <div style={p.successText}>* wow. you actually did it.</div>
-                      <div style={p.successText}>* don't let it go to your head.</div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                <button style={{ ...pg.btnHint }} onClick={s3StartFlicker}>[continue]</button>
+              </div>
+            )}
+            {screen===3 && s3==="vibey_appears" && (
+              <button style={{ ...pg.btnSubmit, background:"#ff4444", animation:"bigShake 0.2s infinite", fontSize:15 }}
+                onClick={s3VibeyTakeover}>
+                🔴 I'LL SOLVE IT MYSELF.
+              </button>
+            )}
+            {screen===3 && s3==="fight" && (
+              <button style={pg.btnHint} onClick={s3Reclaim}>✏ Reclaim control — rewrite</button>
+            )}
+            {screen===3 && s3==="cleany_dlg" && (
+              <button style={pg.btnSubmit} onClick={s3Submit}>SUBMIT</button>
+            )}
+            {screen===3 && (s3==="accepted"||s3==="s3_final") && (
+              <span style={pg.statusGood}>✓ ACCEPTED — determination mode complete</span>
+            )}
           </div>
         </div>
+
+        {/* RIGHT — VIBEY */}
+        <VibeyPanel level={vibeyPanelLevel} glitch={vibeyGlitch} />
       </div>
 
-      {/* Intervention dialogue */}
-      {activeIntervention && (
-        <div style={p.interventionOverlay}>
-          <DialogueBox
-            portrait={activeIntervention.portrait}
-            name={activeIntervention.character}
-            message={activeIntervention.message}
-            onClose={dismissIntervention}
-            audioCtx={audioCtxRef.current}
-            isAngel={activeIntervention.type === "angel"}
-          />
-          {activeIntervention.codeModification && (
-            <div style={p.interventionActions}>
-              <button style={p.acceptBtn} onClick={dismissIntervention}>ACCEPT CHANGE</button>
-              <button style={p.declineBtn} onClick={() => { setActiveIntervention(null); scheduleIntervention(); }}>IGNORE</button>
-            </div>
-          )}
-          {!activeIntervention.codeModification && (
-            <div style={p.interventionActions}>
-              <button style={p.declineBtn} onClick={() => { setActiveIntervention(null); scheduleIntervention(); }}>OK</button>
-            </div>
-          )}
-        </div>
+      {/* ---- DIALOGUE OVERLAYS ---- */}
+      {s1==="vibey_talking" && (
+        <DialogueBox lines={DLG_S1_BAD} onComplete={() => setS1("cleany_hint")} />
+      )}
+      {s1==="cleany_hint" && (
+        <DialogueBox lines={DLG_S1_CLEANY} onComplete={() => setS1("hint_shown")} />
+      )}
+      {s1==="comment_dlg" && (
+        <DialogueBox lines={DLG_S1_COMMENT} onComplete={() => { setS1("accepted"); playSuccess(); setTimeout(() => setS1("s1_final"), 600); }} />
+      )}
+      {s1==="s1_final" && (
+        <DialogueBox lines={DLG_S1_FINAL} onComplete={() => setS1("s1_done")} />
+      )}
+
+      {s2==="vibey_dlg" && (
+        <DialogueBox lines={DLG_S2_VIBEY} onComplete={() => setS2("cleany_dlg")} />
+      )}
+      {s2==="cleany_dlg" && (
+        <DialogueBox lines={DLG_S2_CLEANY} onComplete={() => setS2("user_codes")} />
+      )}
+      {s2==="s2_final" && (
+        <DialogueBox lines={DLG_S2_FINAL} onComplete={() => setS2("s2_done" as S2)} />
+      )}
+
+      {s3==="vibey_dlg" && (
+        <DialogueBox lines={DLG_S3_VIBEY} onComplete={() => setS3("takeover")} />
+      )}
+      {s3==="fight" && (
+        <DialogueBox lines={DLG_S3_CLEANY} onComplete={() => {}} />
+      )}
+      {s3==="s3_final" && (
+        <DialogueBox lines={DLG_S3_FINAL} onComplete={() => {}} />
+      )}
+
+      {/* Missing transition: vibey_appears → vibey_dlg */}
+      {s3==="vibey_appears" && (
+        <></>
       )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body, #root { height: 100%; background: #080810; }
-        textarea { caret-color: #a78bfa; }
-        textarea::selection { background: rgba(167,139,250,0.3); }
-        ::-webkit-scrollbar { width: 6px; background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        @keyframes dlgIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        html,body,#root { height:100%; background:#08080f; }
+        textarea { caret-color:#a78bfa; }
+        ::-webkit-scrollbar { width:5px; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); }
+        b { color:#fff; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
         @keyframes arrowBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes scanMove { from{transform:translateY(0)} to{transform:translateY(4px)} }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes dlgIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+        @keyframes dlgShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+        @keyframes dlgGlitch { 0%{transform:translate(0,0) skewX(0)} 20%{transform:translate(-4px,0) skewX(-3deg)} 40%{transform:translate(4px,0) skewX(3deg)} 60%{transform:translate(-2px,1px)} 80%{transform:translate(2px,-1px)} 100%{transform:translate(0,0)} }
+        @keyframes dlgFlash { 0%,100%{filter:brightness(1)} 50%{filter:brightness(4)} }
+        @keyframes editorShake { 0%,100%{transform:translateX(0)} 33%{transform:translateX(-8px)} 66%{transform:translateX(8px)} }
+        @keyframes bigShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-3px,-2px)} 75%{transform:translate(3px,2px)} }
+        @keyframes vibeypulse { 0%,100%{filter:drop-shadow(0 0 8px #ff4444);transform:scale(1)} 50%{filter:drop-shadow(0 0 28px #ff2222);transform:scale(1.1)} }
+        @keyframes glitchChar { 0%{transform:translate(0,0) skewX(0deg) scaleX(1)} 20%{transform:translate(-3px,1px) skewX(-4deg)} 40%{transform:translate(3px,-1px) skewX(4deg) scaleX(1.04)} 60%{transform:translate(-1px,0)} 80%{transform:translate(2px,1px)} 100%{transform:translate(0,0)} }
       `}</style>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-const p: Record<string, React.CSSProperties> = {
-  root: { height:"100vh", display:"flex", flexDirection:"column", background:"#080810", color:"#e2e8f0", overflow:"hidden", position:"relative" },
+// ============================================================================
+// PAGE STYLES
+// ============================================================================
+const pg: Record<string, React.CSSProperties> = {
+  root: { height:"100vh", display:"flex", flexDirection:"column", background:"#08080f", color:"#e2e8f0", overflow:"hidden", position:"relative" },
+  scanlines: { position:"fixed", inset:0, pointerEvents:"none", zIndex:999, backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px)" },
+  redFlash: { position:"fixed", inset:0, background:"rgba(255,0,0,0.4)", zIndex:800, pointerEvents:"none", animation:"dlgFlash 0.7s ease forwards" },
+  whiteFlash: { position:"fixed", inset:0, background:"#fff", zIndex:800, pointerEvents:"none", animation:"dlgFlash 1.2s ease forwards" },
 
-  scanlines: {
-    position:"fixed", inset:0, pointerEvents:"none", zIndex:1000,
-    backgroundImage:"repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)",
-    backgroundSize:"100% 4px",
-  },
-
-  topBar: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 20px", height:52, background:"#000", borderBottom:"2px solid #fff", flexShrink:0, zIndex:10 },
-  topLogo: { display:"flex", alignItems:"center", gap:8 },
-  topLogoText: { fontFamily:"'Space Mono', monospace", fontWeight:700, fontSize:15, color:"#fff", letterSpacing:1 },
-  topLogoBadge: { background:"#fff", color:"#000", fontSize:9, fontWeight:700, padding:"2px 6px", letterSpacing:1 },
-  topMeta: { display:"flex", alignItems:"center", gap:12 },
-  problemNum: { fontFamily:"'Space Mono', monospace", fontSize:11, color:"rgba(255,255,255,0.3)", letterSpacing:1 },
-  problemTitle: { fontFamily:"'Space Mono', monospace", fontSize:14, fontWeight:700, color:"#fff" },
-  diffBadge: { background:"#065f46", color:"#6ee7b7", border:"1px solid #6ee7b7", fontFamily:"'Space Mono', monospace", fontSize:9, fontWeight:700, padding:"2px 8px", letterSpacing:1 },
-  topActions: { display:"flex", gap:10 },
-  runBtn: { background:"none", border:"2px solid #fff", color:"#fff", fontFamily:"'Space Mono', monospace", fontSize:11, fontWeight:700, padding:"6px 16px", cursor:"pointer", letterSpacing:1, transition:"background 0.15s, color 0.15s" },
-  submitBtn: { background:"#fff", color:"#000" },
+  topBar: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 16px", height:50, background:"#000", borderBottom:"2px solid rgba(255,255,255,0.12)", flexShrink:0 },
+  logoText: { fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:14, color:"#fff", letterSpacing:1 },
+  logoBadge: { background:"#fff", color:"#000", fontFamily:"'Space Mono',monospace", fontSize:8, fontWeight:700, padding:"2px 5px", letterSpacing:1 },
+  levelInfo: { display:"flex", alignItems:"center", gap:12 },
+  levelText: { fontFamily:"'Space Mono',monospace", fontWeight:700 },
+  levelSub: { fontFamily:"'Space Mono',monospace", fontSize:10, color:"rgba(255,255,255,0.3)" },
+  levelPip: { width:28, height:28, border:"2px solid", background:"none", fontFamily:"'Space Mono',monospace", fontSize:11, fontWeight:700, cursor:"pointer" },
 
   layout: { display:"flex", flex:1, overflow:"hidden" },
+  center: { flex:1, display:"flex", flexDirection:"column", overflow:"hidden", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" },
 
-  // Left sidebar
-  sidebar: { width:380, flexShrink:0, borderRight:"2px solid rgba(255,255,255,0.15)", background:"#050508", overflowY:"auto", padding:"16px 20px", display:"flex", flexDirection:"column", gap:0 },
+  descPane: { padding:"16px 20px", borderBottom:"1px solid rgba(255,255,255,0.07)", flexShrink:0, overflowY:"auto", maxHeight:"36%" },
+  descTitle: { fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:16, color:"#fff", marginBottom:8 },
+  easyBadge: { display:"inline-block", background:"#065f46", color:"#6ee7b7", border:"1px solid #6ee7b7", fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, padding:"2px 8px", letterSpacing:1, marginBottom:10 },
+  descBody: { fontFamily:"'DM Sans',sans-serif", fontSize:13, color:"#9ca3af", lineHeight:1.7, marginBottom:10 },
+  example: { background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", padding:"8px 12px", fontFamily:"'Space Mono',monospace", fontSize:11, color:"#d1d5db", lineHeight:1.8, marginBottom:6 },
+  exNote: { color:"#6b7280", fontSize:10 },
+  inlineCode: { background:"rgba(255,255,255,0.08)", padding:"1px 5px", fontFamily:"'Space Mono',monospace", fontSize:11 },
 
-  // Right pane
-  rightPane: { flex:1, display:"flex", flexDirection:"column", overflow:"hidden" },
+  editorPane: { flex:1, display:"flex", flexDirection:"column", overflow:"hidden" },
+  editorHeader: { display:"flex", alignItems:"center", gap:10, padding:"7px 16px", background:"rgba(0,0,0,0.5)", borderBottom:"1px solid rgba(255,255,255,0.07)", flexShrink:0 },
+  editorTag: { fontFamily:"'Space Mono',monospace", fontSize:10, fontWeight:700, color:"#a78bfa", letterSpacing:2 },
+  editorFile: { fontFamily:"'Space Mono',monospace", fontSize:10, color:"rgba(255,255,255,0.25)" },
+  editorInner: { flex:1, display:"flex", overflow:"hidden" },
+  lineNums: { width:42, background:"rgba(0,0,0,0.35)", display:"flex", flexDirection:"column", padding:"16px 0", borderRight:"1px solid rgba(255,255,255,0.05)", flexShrink:0, overflowY:"hidden" },
+  lineNum: { fontFamily:"'Space Mono',monospace", fontSize:11, color:"rgba(255,255,255,0.18)", textAlign:"right", paddingRight:9, lineHeight:"1.7", height:"22.1px", flexShrink:0 },
+  textarea: { flex:1, background:"transparent", border:"none", outline:"none", resize:"none", fontFamily:"'Space Mono',monospace", fontSize:13, lineHeight:1.7, padding:"16px", color:"#e2e8f0" },
 
-  // Editor
-  editorPane: { flex:"0 0 60%", display:"flex", flexDirection:"column", borderBottom:"2px solid rgba(255,255,255,0.1)", overflow:"hidden", position:"relative" },
-  editorHeader: { display:"flex", alignItems:"center", gap:12, padding:"8px 16px", background:"rgba(0,0,0,0.5)", borderBottom:"1px solid rgba(255,255,255,0.08)", flexShrink:0 },
-  editorLang: { fontFamily:"'Space Mono', monospace", fontSize:10, fontWeight:700, color:"#a78bfa", letterSpacing:2 },
-  editorFile: { fontFamily:"'Space Mono', monospace", fontSize:10, color:"rgba(255,255,255,0.3)", letterSpacing:0.5 },
-  resetBtn: { marginLeft:"auto", background:"none", border:"1px solid rgba(255,255,255,0.15)", color:"rgba(255,255,255,0.4)", fontFamily:"'Space Mono', monospace", fontSize:9, padding:"3px 10px", cursor:"pointer", letterSpacing:1 },
-  lineNumbers: { position:"absolute", left:0, top:40, bottom:0, width:40, background:"rgba(0,0,0,0.3)", display:"flex", flexDirection:"column", paddingTop:16, borderRight:"1px solid rgba(255,255,255,0.05)", overflowY:"hidden", zIndex:1 },
-  lineNum: { fontFamily:"'Space Mono', monospace", fontSize:11, color:"rgba(255,255,255,0.2)", textAlign:"right", paddingRight:10, lineHeight:"1.7", height:"22.1px", flexShrink:0 },
-
-  // Test pane
-  testPane: { flex:1, display:"flex", flexDirection:"column", overflow:"hidden" },
-  testHeader: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 16px", background:"rgba(0,0,0,0.5)", borderBottom:"1px solid rgba(255,255,255,0.08)", flexShrink:0 },
-  testHeaderText: { fontFamily:"'Space Mono', monospace", fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.5)", letterSpacing:2 },
-  testBody: { flex:1, overflow:"auto", padding:"16px" },
-  testIdle: { display:"flex", flexDirection:"column", gap:6 },
-  testIdleText: { fontFamily:"'Space Mono', monospace", fontSize:12, color:"rgba(255,255,255,0.3)", lineHeight:1.8 },
-  testList: { display:"flex", flexDirection:"column", gap:10 },
-  testItem: { border:"1px solid", padding:"12px 14px", display:"flex", flexDirection:"column", gap:6 },
-  testItemHeader: { display:"flex", alignItems:"center", gap:12 },
-  testStatus: { fontFamily:"'Space Mono', monospace", fontSize:12, fontWeight:700 },
-  testInput: { fontFamily:"'Space Mono', monospace", fontSize:10, color:"rgba(255,255,255,0.4)" },
-  testRow: { display:"flex", gap:10, alignItems:"baseline" },
-  testKey: { fontFamily:"'Space Mono', monospace", fontSize:10, color:"rgba(255,255,255,0.35)", width:72, flexShrink:0 },
-  testVal: { fontFamily:"'Space Mono', monospace", fontSize:12, color:"#e2e8f0" },
-  successMsg: { background:"rgba(6,95,70,0.2)", border:"2px solid #6ee7b7", padding:"16px", display:"flex", flexDirection:"column", gap:4 },
-  successText: { fontFamily:"'Space Mono', monospace", fontSize:13, color:"#6ee7b7", lineHeight:1.8 },
-
-  // Intervention overlay
-  interventionOverlay: { position:"fixed", bottom:24, right:24, width:"min(520px, 90vw)", zIndex:500, display:"flex", flexDirection:"column", gap:8 },
-  interventionActions: { display:"flex", gap:8, justifyContent:"flex-end" },
-  acceptBtn: { background:"rgba(167,139,250,0.15)", border:"2px solid #a78bfa", color:"#c4b5fd", fontFamily:"'Space Mono', monospace", fontSize:10, fontWeight:700, padding:"7px 16px", cursor:"pointer", letterSpacing:1 },
-  declineBtn: { background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.5)", fontFamily:"'Space Mono', monospace", fontSize:10, padding:"7px 14px", cursor:"pointer", letterSpacing:1 },
+  actionBar: { display:"flex", alignItems:"center", flexWrap:"wrap", gap:10, padding:"10px 18px", background:"rgba(0,0,0,0.55)", borderTop:"1px solid rgba(255,255,255,0.07)", flexShrink:0, minHeight:52 },
+  btnSubmit: { background:"#fff", border:"none", color:"#000", fontFamily:"'Space Mono',monospace", fontSize:12, fontWeight:700, padding:"9px 22px", cursor:"pointer", letterSpacing:1 },
+  btnHint: { background:"none", border:"1px solid rgba(255,255,255,0.25)", color:"rgba(255,255,255,0.65)", fontFamily:"'Space Mono',monospace", fontSize:11, padding:"8px 16px", cursor:"pointer", letterSpacing:0.5 },
+  statusBad: { fontFamily:"'Space Mono',monospace", fontSize:12, color:"#ff4444", animation:"dlgShake 0.3s infinite" },
+  statusGood: { fontFamily:"'Space Mono',monospace", fontSize:12, color:"#6ee7b7" },
 };

@@ -245,7 +245,7 @@ export default function WelcomePage({ onStart }: { onStart?: () => void }) {
           intelligent suggestions to help you crack any technical interview.
         </p>
         <div style={s.heroActions}>
-          <button style={{ ...s.heroCta, fontSize: 20, padding: "18px 52px", letterSpacing: 1 }} onClick={advanceDialogue}>
+          <button style={{ ...s.heroCta, fontSize: 20, padding: "18px 52px", letterSpacing: 1 }} onClick={() => onStart?.()}>
             Start Coding
           </button>
         </div>
