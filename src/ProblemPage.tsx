@@ -986,9 +986,8 @@ export default function ProblemPage({ onComplete }: { onComplete?: () => void })
             {screen===1 && s1==="idle" && <button style={pg.btnSubmit} onClick={s1Submit}>SUBMIT</button>}
             {screen===1 && s1==="bad_submitted" && <span style={pg.statusBad}>✗ TIME LIMIT EXCEEDED — O(n²)</span>}
             {screen===1 && (s1==="cleany_hint"||s1==="hint_shown") && (
-              <button style={pg.btnHint} onClick={() => { setCode1(CODE_S1_GOOD); setS1("good_code"); }}>→ Rewrite with hashmap</button>
+              <button style={pg.btnSubmit} onClick={s1GoodSubmit}>SUBMIT</button>
             )}
-            {screen===1 && s1==="good_code" && <button style={pg.btnSubmit} onClick={s1GoodSubmit}>SUBMIT</button>}
             {screen===1 && (s1==="accepted"||s1==="s1_final") && <span style={pg.statusGood}>✓ ACCEPTED — O(n) runtime</span>}
             {screen===1 && s1==="s1_done" && <button style={pg.btnHint} onClick={() => setScreen(2)}>→ LEVEL 2</button>}
 
