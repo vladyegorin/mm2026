@@ -3,18 +3,28 @@ import { useState, useEffect, useRef } from "react";
 // ============================================================================
 // MUSIC PLACEHOLDERS
 // ============================================================================
-const MUSIC_FILES: Record<string, HTMLAudioElement | null> = {
-  ghostFight: null, home: null, sans: null, nyehHehHeh: null, snowdinTown: null,
-  bonetrousle: null, hotel: null, heartache: null,
-  strongerMonsters: null, megalovania: null, hisTheme: null,
+const MUSIC_FILES: Record<string, HTMLAudioElement> = {
+  ghostFight:       new Audio("/music/undertale_010. Ghost Fight.mp3"),
+  home:             new Audio("/music/undertale_012. Home.mp3"),
+  heartache:        new Audio("/music/undertale_014. Heartache.mp3"),
+  sans:             new Audio("/music/undertale_015. sans..mp3"),
+  nyehHehHeh:       new Audio("/music/undertale_016. Nyeh Heh Heh!.mp3"),
+  snowdinTown:      new Audio("/music/undertale_022. Snowdin Town.mp3"),
+  bonetrousle:      new Audio("/music/undertale_024. Bonetrousle.mp3"),
+  strongerMonsters: new Audio("/music/undertale_053. Stronger Monsters.mp3"),
+  hotel:            new Audio("/music/undertale_054. Hotel.mp3"),
+  hisTheme:         new Audio("/music/undertale_090. His Theme.mp3"),
+  megalovania:      new Audio("/music/undertale_100. MEGALOVANIA.mp3"),
 };
-function playTrack(_key: string) {
-  const track = MUSIC_FILES[_key]; if (!track) return;
-  Object.values(MUSIC_FILES).forEach(t => { if (t) { t.pause(); t.currentTime = 0; } });
-  track.loop = true; track.play().catch(() => {});
+function playTrack(key: string) {
+  const track = MUSIC_FILES[key];
+  if (!track) return;
+  Object.values(MUSIC_FILES).forEach(t => { t.pause(); t.currentTime = 0; });
+  track.loop = true;
+  track.play().catch(() => {});
 }
 function stopAllMusic() {
-  Object.values(MUSIC_FILES).forEach(t => { if (t) { t.pause(); t.currentTime = 0; } });
+  Object.values(MUSIC_FILES).forEach(t => { t.pause(); t.currentTime = 0; });
 }
 
 // ============================================================================
@@ -270,7 +280,6 @@ const DLG_FINAL_SCENE: DialogueLine[] = [
   { speaker:"cleany", text:"I believe YOU know it does.", effect:"calm" },
   { speaker:"vibey",  text:"…", effect:"none" },
   { speaker:"vibey",  text:"Don't push it.", effect:"none" },
-  { speaker:"system", text:"Stay determined.", effect:"none" },
 ];
 
 // ============================================================================
@@ -372,37 +381,80 @@ const dlg: Record<string, React.CSSProperties> = {
 // FINAL SCENE — cinematic, both characters visible, big dialogue
 // ============================================================================
 function FinalScene({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState<"in"|"dialogue"|"out">("in");
+  const [phase, setPhase] = useState<"in"|"dialogue"|"stare"|"out">("in");
 
   useEffect(() => {
     const t = setTimeout(() => setPhase("dialogue"), 900);
     return () => clearTimeout(t);
   }, []);
 
-  const handleDone = () => {
+  const handleDone = () => setPhase("stare");
+
+  const handleStareClick = () => {
     setPhase("out");
     setTimeout(onComplete, 1400);
   };
 
+  // Particle positions — fixed so they don't regenerate
+  const particles = useRef(
+    Array.from({ length: 18 }, (_, i) => ({
+      x: 5 + (i * 37 + 11) % 90,
+      y: 10 + (i * 53 + 7) % 80,
+      size: 1.5 + (i % 4) * 0.8,
+      delay: (i * 0.4) % 4,
+      dur: 3 + (i % 5),
+      color: i % 2 === 0 ? "#ff444444" : "#44ddff44",
+    }))
+  ).current;
+
   return (
-    <div style={{
-      position:"fixed", inset:0, zIndex:1000,
-      background:"#000",
-      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-      opacity: phase === "out" ? 0 : 1,
-      transition:"opacity 1.4s ease",
-    }}>
+    <div
+      style={{
+        position:"fixed", inset:0, zIndex:1000,
+        background:"#000",
+        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+        opacity: phase === "out" ? 0 : 1,
+        transition:"opacity 1.4s ease",
+        cursor: phase === "stare" ? "pointer" : "default",
+      }}
+      onClick={phase === "stare" ? handleStareClick : undefined}
+    >
       {/* Scanlines */}
       <div style={{ position:"absolute", inset:0, pointerEvents:"none", backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.018) 2px,rgba(255,255,255,0.018) 4px)" }} />
+
       {/* Ambient light blobs */}
-      <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"radial-gradient(ellipse at 18% 50%, rgba(255,68,68,0.13) 0%, transparent 55%), radial-gradient(ellipse at 82% 50%, rgba(68,221,255,0.13) 0%, transparent 55%)" }} />
+      <div style={{
+        position:"absolute", inset:0, pointerEvents:"none",
+        background:"radial-gradient(ellipse at 18% 50%, rgba(255,68,68,0.13) 0%, transparent 55%), radial-gradient(ellipse at 82% 50%, rgba(68,221,255,0.13) 0%, transparent 55%)",
+        animation: phase === "stare" ? "finalBgPulse 4s ease-in-out infinite alternate" : "none",
+      }} />
+
+      {/* Floating particles — only during stare */}
+      {phase === "stare" && particles.map((p, i) => (
+        <div key={i} style={{
+          position:"absolute",
+          left:`${p.x}%`, top:`${p.y}%`,
+          width: p.size, height: p.size,
+          borderRadius:"50%",
+          background: p.color,
+          animation:`${i % 2 === 0 ? "particleDrift" : "particleDriftR"} ${p.dur}s ease-in-out ${p.delay}s infinite`,
+          pointerEvents:"none",
+        }} />
+      ))}
 
       {/* Characters */}
-      <div style={{ display:"flex", alignItems:"flex-end", gap:100, marginBottom:52, position:"relative", zIndex:2 }}>
+      <div style={{ display:"flex", alignItems:"flex-end", gap:100, marginBottom: phase === "stare" ? 0 : 52, position:"relative", zIndex:2, transition:"margin 1s ease" }}>
 
         {/* VIBEY — left, mirrored to face right */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, animation:"finalFloat 3.2s ease-in-out infinite" }}>
-          <svg viewBox="0 0 16 20" width="100" height="124" style={{ imageRendering:"pixelated", filter:"drop-shadow(0 0 20px #ff4444)", transform:"scaleX(-1)" }}>
+          <svg viewBox="0 0 16 20" width="100" height="124" style={{
+            imageRendering:"pixelated",
+            filter: phase === "stare"
+              ? "drop-shadow(0 0 28px #ff4444) drop-shadow(0 0 8px #ff222288)"
+              : "drop-shadow(0 0 20px #ff4444)",
+            transform:"scaleX(-1)",
+            transition:"filter 2s ease",
+          }}>
             <ellipse cx="8" cy="19.5" rx="4.5" ry="0.8" fill="rgba(255,68,68,0.35)" />
             <rect x="7" y="13" width="2" height="5" fill="#1a6b1a" />
             <rect x="4" y="12" width="3" height="2" fill="#1a6b1a" />
@@ -416,7 +468,6 @@ function FinalScene({ onComplete }: { onComplete: () => void }) {
             <rect x="5" y="10" width="3" height="3" fill="#cc2222" />
             <rect x="8" y="10" width="3" height="3" fill="#cc2222" />
             <rect x="5" y="4" width="6" height="8" fill="#f5c518" />
-            {/* calm eyes for finale */}
             <rect x="6" y="6" width="1" height="2" fill="#660000" />
             <rect x="9" y="6" width="1" height="2" fill="#660000" />
             <rect x="7" y="9" width="2" height="1" fill="#000" />
@@ -434,7 +485,13 @@ function FinalScene({ onComplete }: { onComplete: () => void }) {
 
         {/* CLEANY — right */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, animation:"finalFloat 3.2s ease-in-out infinite", animationDelay:"1.6s" }}>
-          <svg viewBox="0 0 16 20" width="100" height="124" style={{ imageRendering:"pixelated", filter:"drop-shadow(0 0 20px #44ddff)" }}>
+          <svg viewBox="0 0 16 20" width="100" height="124" style={{
+            imageRendering:"pixelated",
+            filter: phase === "stare"
+              ? "drop-shadow(0 0 28px #44ddff) drop-shadow(0 0 8px #22bbff88)"
+              : "drop-shadow(0 0 20px #44ddff)",
+            transition:"filter 2s ease",
+          }}>
             <ellipse cx="8" cy="19.5" rx="4.5" ry="0.8" fill="rgba(68,221,255,0.3)" />
             <rect x="4" y="9" width="8" height="9" fill="#e8e8f8" />
             <rect x="4" y="9" width="1" height="9" fill="#c8c8e8" />
@@ -450,7 +507,6 @@ function FinalScene({ onComplete }: { onComplete: () => void }) {
             <rect x="6" y="4" width="2" height="2" fill="#44ddff" />
             <rect x="9" y="4" width="2" height="2" fill="#44ddff" />
             <rect x="7" y="7" width="2" height="1" fill="#aa6644" />
-            {/* Wings */}
             <rect x="1" y="9" width="3" height="1" fill="#ffffff88" />
             <rect x="0" y="10" width="3" height="2" fill="#ffffff66" />
             <rect x="12" y="9" width="3" height="1" fill="#ffffff88" />
@@ -461,20 +517,42 @@ function FinalScene({ onComplete }: { onComplete: () => void }) {
         </div>
       </div>
 
-      {/* Dialogue */}
+      {/* Dialogue box */}
       {phase === "dialogue" && (
         <div style={{ width:"min(780px,92vw)", position:"relative", zIndex:10 }}>
           <DialogueBox lines={DLG_FINAL_SCENE} onComplete={handleDone} />
         </div>
       )}
+
+      {/* Loading hint */}
       {phase === "in" && (
         <div style={{ fontFamily:"'Space Mono',monospace", fontSize:11, color:"rgba(255,255,255,0.18)", letterSpacing:4, animation:"blink 0.6s step-end infinite" }}>
           ▶ FINAL SCENE...
         </div>
       )}
 
+      {/* Stare — "Stay determined." text + click hint */}
+      {phase === "stare" && (
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:16, marginTop:48, zIndex:10 }}>
+          <div style={{
+            fontFamily:"'Space Mono',monospace", fontSize:14, color:"rgba(255,255,255,0.55)",
+            letterSpacing:6, textTransform:"uppercase",
+            animation:"stareText 3s ease-in-out infinite alternate",
+          }}>
+            stay determined.
+          </div>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:"rgba(255,255,255,0.15)", letterSpacing:3, animation:"blink 1.4s step-end infinite" }}>
+            click to continue
+          </div>
+        </div>
+      )}
+
       <style>{`
-        @keyframes finalFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+        @keyframes finalFloat    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+        @keyframes finalBgPulse  { 0%{opacity:0.6} 100%{opacity:1.0} }
+        @keyframes particleDrift { 0%{transform:translate(0,0) scale(1); opacity:0.4} 50%{opacity:0.6} 100%{transform:translate(-10px,-22px) scale(1.8); opacity:0} }
+        @keyframes particleDriftR{ 0%{transform:translate(0,0) scale(1); opacity:0.4} 50%{opacity:0.6} 100%{transform:translate(10px,-22px) scale(1.8); opacity:0} }
+        @keyframes stareText     { 0%{opacity:0.3; letter-spacing:6px} 100%{opacity:0.7; letter-spacing:10px} }
       `}</style>
     </div>
   );
