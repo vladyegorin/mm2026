@@ -101,16 +101,7 @@ interface DialogueLine {
 // ============================================================================
 // CODE SNIPPETS
 // ============================================================================
-const CODE_S1_BAD = `function twoSum(nums: number[], target: number): number[] {
-  for (let i = 0; i < nums.length; i++) {
-    for (let j = i + 1; j < nums.length; j++) {
-      if (nums[i] + nums[j] === target) {
-        return [i, j];
-      }
-    }
-  }
-  return [];
-}`;
+const CODE_S1_BAD = `// write your code here`;
 
 const CODE_S1_GOOD = `function twoSum(nums: number[], target: number): number[] {
   const seen = new Map<number, number>();
