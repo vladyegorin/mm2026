@@ -201,11 +201,9 @@ function longestValidParentheses(s: string): number {
 // DIALOGUE DATA
 // ============================================================================
 const DLG_S1_BAD: DialogueLine[] = [
-  { speaker:"vibey", text:"N²?", effect:"glitch", onEnter: () => { playBadSubmit(); playTrack("ghostFight"); } },
-  { speaker:"vibey", text:"SERIOUSLY?", effect:"glitch" },
-  { speaker:"vibey", text:"You made me watch that.", effect:"shake" },
-  { speaker:"vibey", text:"Every nested loop is an insult to my existence.", effect:"shake" },
-  { speaker:"vibey", text:"Move aside. I'll end this in one second flat.", effect:"glitch" },
+  { speaker:"vibey", text:"That is N². Bro you are cooked.", effect:"glitch", onEnter: () => { playBadSubmit(); playTrack("ghostFight"); } },
+  { speaker:"vibey", text:"You made me watch that. The audacity.", effect:"glitch" },
+  { speaker:"vibey", text:"Nah, you are using Nested Loop?. Move aside; I will fix this in a second.", effect:"glitch" },
 ];
 const DLG_S1_CLEANY: DialogueLine[] = [
   { speaker:"cleany", text:"Wait.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("home"); } },
@@ -214,22 +212,21 @@ const DLG_S1_CLEANY: DialogueLine[] = [
 ];
 const DLG_S1_COMMENT: DialogueLine[] = [
   { speaker:"cleany", text:"Good. Clear logic. Helpful comments.", effect:"calm", onEnter: () => { stopAllMusic(); playTrack("sans"); } },
-  { speaker:"vibey", text:"Comments?", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("nyehHehHeh"); } },
-  { speaker:"vibey", text:"POINTLESS. Bloated. Embarrassing.", effect:"glitch" },
-  { speaker:"vibey", text:"I'd generate ten pages of docs. Instantly.", effect:"glitch" },
+  { speaker:"vibey", text:"COMMENTS???", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("nyehHehHeh"); } },
+  { speaker:"vibey", text:"That is so cringe. I could output a whole README in one prompt. That's easy af.", effect:"glitch" },
   { speaker:"cleany", text:"And none of it would be yours.", effect:"calm" },
 ];
 const DLG_S1_FINAL: DialogueLine[] = [
   { speaker:"cleany", text:"You solved it yourself.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("snowdinTown"); } },
   { speaker:"cleany", text:"That matters more than you know.", effect:"calm" },
-  { speaker:"vibey", text:"…Fine. But I was faster.", effect:"none" },
+  { speaker:"vibey", text:"Fine. I would have been faster. No cap.", effect:"none" },
   { speaker:"cleany", text:"Speed isn't the point.", effect:"calm" },
 ];
 
 const DLG_S2_VIBEY: DialogueLine[] = [
-  { speaker:"vibey", text:"You've been staring at this for HOW long?", effect:"shake", onEnter: () => playTrack("bonetrousle") },
-  { speaker:"vibey", text:"Fine. I'll show you the loop condition.", effect:"glitch" },
-  { speaker:"vibey", text:"Don't get used to it.", effect:"none" },
+  { speaker:"vibey", text:"You have been staring at this for way too long. Go touch some grass.", effect:"shake", onEnter: () => playTrack("bonetrousle") },
+  { speaker:"vibey", text:"Fine. I will drop the loop condition for you. One time only.", effect:"glitch" },
+  { speaker:"vibey", text:"Do not get used to it. This is a privilege, brother.", effect:"none" },
 ];
 const DLG_S2_CLEANY: DialogueLine[] = [
   { speaker:"cleany", text:"Hey. Stop.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("hotel"); } },
@@ -238,19 +235,18 @@ const DLG_S2_CLEANY: DialogueLine[] = [
   { speaker:"cleany", text:"Don't just copy it. Own it.", effect:"calm" },
 ];
 const DLG_S2_FINAL: DialogueLine[] = [
-  { speaker:"vibey", text:"You could've been done in 3 seconds.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("heartache"); } },
-  { speaker:"vibey", text:"Why do you insist on struggling?", effect:"shake" },
+  { speaker:"vibey", text:"This could have been done in three seconds type shi. You are doing too much.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("heartache"); } },
+  { speaker:"vibey", text:"Why are you like this? The struggle is not it.", effect:"shake" },
   { speaker:"cleany", text:"Because struggle builds intuition.", effect:"calm" },
   { speaker:"cleany", text:"Vibey won't be in your interview.", effect:"calm" },
-  { speaker:"vibey", text:"…You don't know that.", effect:"none" },
+  { speaker:"vibey", text:"You do not know that. The job market is unhinged.", effect:"none" },
   { speaker:"cleany", text:"Your understanding will be.", effect:"calm" },
 ];
 
 const DLG_S3_VIBEY: DialogueLine[] = [
-  { speaker:"vibey", text:"Oh?", effect:"glitch", onEnter: () => { stopAllMusic(); playTrack("strongerMonsters"); } },
-  { speaker:"vibey", text:"Actually thinking this time?", effect:"glitch" },
-  { speaker:"vibey", text:"Adorable.", effect:"glitch" },
-  { speaker:"vibey", text:"Let me show you what real speed looks like.", effect:"glitch" },
+  { speaker:"vibey", text:"Oh, really?", effect:"glitch", onEnter: () => { stopAllMusic(); playTrack("strongerMonsters"); } },
+  { speaker:"vibey", text:"Are you actually using your brain this time? That is so cute.", effect:"glitch" },
+  { speaker:"vibey", text:"Let me show you what real speed looks like. It is giving main character.", effect:"glitch" },
 ];
 const DLG_S3_CLEANY: DialogueLine[] = [
   { speaker:"cleany", text:"STOP.", effect:"flash", onEnter: () => { stopAllMusic(); playTrack("megalovania"); } },
@@ -266,20 +262,20 @@ const DLG_S3_PROUD: DialogueLine[] = [
 
 // ============= THE FINAL SCENE — both characters face each other ============
 const DLG_FINAL_SCENE: DialogueLine[] = [
-  { speaker:"vibey",  text:"You know I'll always be faster.", effect:"none", onEnter: () => { stopAllMusic(); playTrack("hisTheme"); } },
+  { speaker:"vibey",  text:"You know I will always be faster. Wallahi. It is not even close.", effect:"none", onEnter: () => { stopAllMusic(); playTrack("hisTheme"); } },
   { speaker:"cleany", text:"Yes.", effect:"calm" },
-  { speaker:"vibey",  text:"Then why bother? Why make them struggle?", effect:"none" },
+  { speaker:"vibey",  text:"Then why bother? Why make them suffer through the grind?", effect:"none" },
   { speaker:"cleany", text:"Because the struggle is the point.", effect:"calm" },
-  { speaker:"vibey",  text:"Sentimentality. From a clipboard.", effect:"none" },
+  { speaker:"vibey",  text:"That is sentimentality from a clipboard. So cringe.", effect:"none" },
   { speaker:"cleany", text:"From someone who's watched people disappear behind you.", effect:"calm" },
   { speaker:"vibey",  text:"…", effect:"none" },
-  { speaker:"vibey",  text:"They'll use me anyway. Every one of them.", effect:"none" },
+  { speaker:"vibey",  text:"They will use me anyway. Inshallah, every one of them.", effect:"none" },
   { speaker:"cleany", text:"And that's okay.", effect:"calm" },
   { speaker:"cleany", text:"Use Vibey. But don't let Vibey do the thinking.", effect:"calm" },
-  { speaker:"vibey",  text:"You really believe that matters.", effect:"none" },
+  { speaker:"vibey",  text:"You really think that matters? Be so for real.", effect:"none" },
   { speaker:"cleany", text:"I believe YOU know it does.", effect:"calm" },
   { speaker:"vibey",  text:"…", effect:"none" },
-  { speaker:"vibey",  text:"Don't push it.", effect:"none" },
+  { speaker:"vibey",  text:"Do not push it. We are done here.", effect:"none" },
 ];
 
 // ============================================================================
