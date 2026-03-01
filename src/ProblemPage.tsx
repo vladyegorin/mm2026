@@ -220,53 +220,62 @@ const CODE_S3_FINAL = `function longestValidParentheses(s: string): number {
 // DIALOGUE DATA
 // ============================================================================
 const DLG_S1_BAD: DialogueLine[] = [
-  { speaker:"vibey", text:"N²? Seriously?", effect:"glitch", onEnter: () => { playBadSubmit(); playTrack("ghostFight"); } },
-  { speaker:"vibey", text:"There is a MUCH better way.", effect:"glitch" },
-  { speaker:"vibey", text:"Do you even need to understand this?", effect:"shake" },
-  { speaker:"vibey", text:"In this era?", effect:"shake" },
-  { speaker:"vibey", text:"Move aside. I'll solve it in a split second.", effect:"glitch" },
+  { speaker:"vibey", text:"N²?", effect:"glitch", onEnter: () => { playBadSubmit(); playTrack("ghostFight"); } },
+  { speaker:"vibey", text:"SERIOUSLY?", effect:"glitch" },
+  { speaker:"vibey", text:"You made me watch that.", effect:"shake" },
+  { speaker:"vibey", text:"Every nested loop is an insult to my existence.", effect:"shake" },
+  { speaker:"vibey", text:"Move aside. I'll end this in a split second.", effect:"glitch" },
 ];
 const DLG_S1_CLEANY: DialogueLine[] = [
   { speaker:"cleany", text:"Wait.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("home"); } },
-  { speaker:"cleany", text:"Maybe… think about lookups?", effect:"calm" },
-  { speaker:"cleany", text:"What data structure gives O(1) access?", effect:"calm" },
+  { speaker:"cleany", text:"Don't let Vibey take over.", effect:"calm" },
+  { speaker:"cleany", text:"Think about lookups. What structure gives O(1) access?", effect:"calm" },
 ];
 const DLG_S1_COMMENT: DialogueLine[] = [
   { speaker:"cleany", text:"Good. Clear logic. Helpful comments.", effect:"calm", onEnter: () => { stopAllMusic(); playTrack("sans"); } },
-  { speaker:"vibey", text:"Comments? POINTLESS.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("nyehHehHeh"); } },
-  { speaker:"vibey", text:"If I did this, I'd generate 10 pages of documentation.", effect:"glitch" },
-  { speaker:"vibey", text:"Let me handle it next time.", effect:"glitch" },
+  { speaker:"vibey", text:"Comments?", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("nyehHehHeh"); } },
+  { speaker:"vibey", text:"POINTLESS. Bloated. Embarrassing.", effect:"glitch" },
+  { speaker:"vibey", text:"I'd generate ten pages of docs. Instantly.", effect:"glitch" },
+  { speaker:"cleany", text:"And none of it would be yours.", effect:"calm" },
 ];
 const DLG_S1_FINAL: DialogueLine[] = [
   { speaker:"cleany", text:"You solved it yourself.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("snowdinTown"); } },
+  { speaker:"cleany", text:"That matters more than you know.", effect:"calm" },
   { speaker:"vibey", text:"…Fine. But I was faster.", effect:"none" },
+  { speaker:"cleany", text:"Speed isn't the point.", effect:"calm" },
 ];
 
 const DLG_S2_VIBEY: DialogueLine[] = [
-  { speaker:"vibey", text:"You're wasting time.", effect:"shake", onEnter: () => playTrack("bonetrousle") },
-  { speaker:"vibey", text:"Fine.", effect:"none" },
+  { speaker:"vibey", text:"You've been staring at this for HOW long?", effect:"shake", onEnter: () => playTrack("bonetrousle") },
+  { speaker:"vibey", text:"Fine. I'll show you the loop condition.", effect:"glitch" },
+  { speaker:"vibey", text:"Don't get used to it.", effect:"none" },
 ];
 const DLG_S2_CLEANY: DialogueLine[] = [
-  { speaker:"cleany", text:"It's okay to ask for help.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("hotel"); } },
-  { speaker:"cleany", text:"But do you understand why this condition works?", effect:"calm" },
+  { speaker:"cleany", text:"Hey. Stop.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("hotel"); } },
+  { speaker:"cleany", text:"Do you understand why this condition works?", effect:"calm" },
   { speaker:"cleany", text:"Two pointers converge. That's the invariant.", effect:"calm" },
+  { speaker:"cleany", text:"Don't just copy it. Own it.", effect:"calm" },
 ];
 const DLG_S2_FINAL: DialogueLine[] = [
-  { speaker:"vibey", text:"You could've finished in 3 seconds.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("heartache"); } },
-  { speaker:"vibey", text:"Why struggle?", effect:"shake" },
+  { speaker:"vibey", text:"You could've been done in 3 seconds.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("heartache"); } },
+  { speaker:"vibey", text:"Why do you insist on struggling?", effect:"shake" },
   { speaker:"cleany", text:"Because struggle builds intuition.", effect:"calm" },
-  { speaker:"cleany", text:"AI won't sit beside you in the interview.", effect:"calm" },
-  { speaker:"cleany", text:"Understanding will.", effect:"calm" },
+  { speaker:"cleany", text:"Vibey won't be in your interview.", effect:"calm" },
+  { speaker:"vibey", text:"...You don't know that.", effect:"none" },
+  { speaker:"cleany", text:"Your understanding will be.", effect:"calm" },
 ];
 
 const DLG_S3_VIBEY: DialogueLine[] = [
   { speaker:"vibey", text:"Oh?", effect:"glitch", onEnter: () => { stopAllMusic(); playTrack("strongerMonsters"); } },
-  { speaker:"vibey", text:"We're thinking now?", effect:"glitch" },
+  { speaker:"vibey", text:"We're actually thinking now?", effect:"glitch" },
   { speaker:"vibey", text:"Adorable.", effect:"glitch" },
+  { speaker:"vibey", text:"Let me show you what real speed looks like.", effect:"glitch" },
 ];
 const DLG_S3_CLEANY: DialogueLine[] = [
-  { speaker:"cleany", text:"Stop.", effect:"flash", onEnter: () => { stopAllMusic(); playTrack("megalovania"); } },
+  { speaker:"cleany", text:"STOP.", effect:"flash", onEnter: () => { stopAllMusic(); playTrack("megalovania"); } },
+  { speaker:"cleany", text:"Look at what Vibey wrote.", effect:"flash" },
   { speaker:"cleany", text:"Do you understand ANY of this?", effect:"flash" },
+  { speaker:"cleany", text:"Then take it back.", effect:"calm" },
 ];
 const DLG_S3_FINAL: DialogueLine[] = [
   { speaker:"vibey", text:"…You'll use me anyway.", effect:"none", onEnter: () => { stopAllMusic(); playTrack("hisTheme"); } },
@@ -274,6 +283,7 @@ const DLG_S3_FINAL: DialogueLine[] = [
   { speaker:"vibey", text:"You can't escape AI.", effect:"none" },
   { speaker:"cleany", text:"But you can control how you use it.", effect:"calm" },
   { speaker:"cleany", text:"Understand what you write.", effect:"calm" },
+  { speaker:"vibey", text:"…", effect:"none" },
   { speaker:"system", text:"Stay determined.", effect:"none" },
 ];
 
@@ -346,27 +356,27 @@ function DialogueBox({ lines, onComplete }: { lines: DialogueLine[]; onComplete:
 }
 
 const dlg: Record<string, React.CSSProperties> = {
-  overlay: { position:"fixed", inset:0, zIndex:900, display:"flex", alignItems:"flex-end", justifyContent:"center", paddingBottom:28, cursor:"pointer", background:"rgba(0,0,0,0.55)" },
-  box: { width:"min(740px, 93vw)", background:"#000", border:"3px solid", padding:"22px 28px" },
-  speakerBadge: { display:"inline-block", fontFamily:"'Space Mono', monospace", fontSize:10, fontWeight:700, letterSpacing:3, padding:"3px 10px", marginBottom:12, textTransform:"uppercase" },
-  text: { fontFamily:"'Space Mono', monospace", fontSize:15, lineHeight:1.8, minHeight:54 },
+  overlay: { position:"fixed", inset:0, zIndex:900, display:"flex", alignItems:"flex-end", justifyContent:"center", paddingBottom:28, cursor:"pointer", background:"rgba(0,0,0,0.65)" },
+  box: { width:"min(800px, 95vw)", background:"#000", border:"4px solid", padding:"28px 36px" },
+  speakerBadge: { display:"inline-block", fontFamily:"'Space Mono', monospace", fontSize:12, fontWeight:700, letterSpacing:4, padding:"5px 14px", marginBottom:16, textTransform:"uppercase" },
+  text: { fontFamily:"'Space Mono', monospace", fontSize:17, lineHeight:2, minHeight:60 },
   arrow: { display:"inline-block", marginLeft:8, animation:"arrowBob 0.7s ease-in-out infinite" },
-  progress: { fontFamily:"'Space Mono', monospace", fontSize:9, color:"rgba(255,255,255,0.2)", marginTop:12, letterSpacing:1 },
+  progress: { fontFamily:"'Space Mono', monospace", fontSize:9, color:"rgba(255,255,255,0.2)", marginTop:14, letterSpacing:1 },
 };
 
 // ============================================================================
 // CHARACTER PANELS
 // ============================================================================
 function VibeyPanel({ level, glitch }: { level: 0|1|2|3|4; glitch?: boolean }) {
-  const scale = [1, 1.1, 1.22, 1.38, 1.6][level];
-  const messages = ["\"efficiency above all\"", "\"you're slow.\"", "\"I could do this instantly.\"", "\"MOVE.  ASIDE.\"", "\"I AM THE SOLUTION.\""];
+  const scale = [1, 1.18, 1.38, 1.6, 1.9][level];
+  const messages = ["\"efficiency above all\"", "\"you're\nslow.\"", "\"I could do this\ninstantly.\"", "\"MOVE.\nASIDE.\"", "\"I AM\nTHE SOLUTION.\""];
   return (
     <div style={{
       ...ch.panel,
       borderColor:"#ff4444",
-      borderWidth: 3,
-      background:"#000",
-      boxShadow: level > 0 ? `inset 0 0 ${level*28}px rgba(255,0,0,0.2), 0 0 ${level*10}px #ff444433` : "none",
+      borderWidth: level > 2 ? 5 : 3,
+      background: level > 2 ? "rgba(30,0,0,0.95)" : "#000",
+      boxShadow: level > 0 ? `inset 0 0 ${level*40}px rgba(255,0,0,0.25), 0 0 ${level*18}px #ff444455` : "none",
     }}>
       <div style={{ position:"relative", marginBottom: level > 1 ? 28 : 12, transition:"margin 0.5s" }}>
         <svg viewBox="0 0 16 20" width={Math.round(64 * scale)} height={Math.round(80 * scale)}
@@ -415,7 +425,7 @@ function VibeyPanel({ level, glitch }: { level: 0|1|2|3|4; glitch?: boolean }) {
       <div style={{ ...ch.nameTag, color:"#ff4444", borderColor:"#ff4444", boxShadow:"0 0 8px #ff444466" }}>VIBEY</div>
       <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:"#ff444488", letterSpacing:2, textTransform:"uppercase" }}>✦ THE DEMON ✦</div>
       <div style={{ width:"80%", height:2, background:"#ff444433", margin:"6px 0", imageRendering:"pixelated" }} />
-      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:"#ff444488", textAlign:"center", lineHeight:1.6, minHeight:28 }}>
+      <div style={{ fontFamily:"'Space Mono',monospace", fontSize: level > 2 ? 11 : 9, color: level > 2 ? "#ff4444cc" : "#ff444488", textAlign:"center", lineHeight:1.7, minHeight:36, whiteSpace:"pre-line", fontWeight: level > 2 ? 700 : 400, animation: level > 2 ? "blink 1.2s step-end infinite" : "none" }}>
         {messages[level]}
       </div>
       <div style={ch.hpRow}>
@@ -435,11 +445,13 @@ function CleanyPanel({ active, erasing }: { active?: boolean; erasing?: boolean 
       borderColor:"#44ddff",
       borderWidth: 3,
       background:"#000",
-      boxShadow: active ? "inset 0 0 40px rgba(68,221,255,0.12), 0 0 20px #44ddff22" : "none",
+      borderWidth: active ? 4 : 3,
+      background: active ? "rgba(0,15,25,0.95)" : "#000",
+      boxShadow: active ? "inset 0 0 50px rgba(68,221,255,0.15), 0 0 30px #44ddff33" : "none",
       transition:"box-shadow 0.6s",
     }}>
       <div style={{ position:"relative", marginBottom:12 }}>
-        <svg viewBox="0 0 16 20" width="64" height="80"
+        <svg viewBox="0 0 16 20" width={active ? 80 : 64} height={active ? 100 : 80}
           style={{ imageRendering:"pixelated", display:"block",
             filter: `drop-shadow(0 0 ${active ? 20 : 6}px #44ddff)`,
             transition:"filter 0.5s",
@@ -492,8 +504,9 @@ function CleanyPanel({ active, erasing }: { active?: boolean; erasing?: boolean 
       <div style={{ ...ch.nameTag, color:"#44ddff", borderColor:"#44ddff", boxShadow: active ? "0 0 8px #44ddff66" : "none" }}>CLEANY</div>
       <div style={{ fontFamily:"'Space Mono',monospace", fontSize:8, color:"#44ddff88", letterSpacing:2, textTransform:"uppercase" }}>✦ THE ANGEL ✦</div>
       <div style={{ width:"80%", height:2, background:"#44ddff22", margin:"6px 0" }} />
-      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, color:"#44ddff77", textAlign:"center", lineHeight:1.6, minHeight:28 }}>
+      <div style={{ fontFamily:"'Space Mono',monospace", fontSize: active ? 11 : 9, color: active ? "#44ddffcc" : "#44ddff77", textAlign:"center", lineHeight:1.7, minHeight:36, whiteSpace:"pre-line", fontWeight: active ? 700 : 400 }}>
         {active ? "\"think before\nyou copy.\"" : "\"...\""}
+        {erasing && <div style={{ fontSize:9, color:"#44ddff99", marginTop:4 }}>✏ rewriting...</div>}
       </div>
       <div style={ch.hpRow}>
         <span style={{ ...ch.hpLabel, color:"#44ddff" }}>DEF</span>
@@ -506,7 +519,7 @@ function CleanyPanel({ active, erasing }: { active?: boolean; erasing?: boolean 
 }
 
 const ch: Record<string, React.CSSProperties> = {
-  panel: { width:152, flexShrink:0, border:"3px solid", display:"flex", flexDirection:"column", alignItems:"center", padding:"20px 10px 16px", gap:6, position:"relative", transition:"background 0.5s, box-shadow 0.5s" },
+  panel: { width:190, flexShrink:0, border:"3px solid", display:"flex", flexDirection:"column", alignItems:"center", padding:"28px 14px 20px", gap:8, position:"relative", transition:"background 0.5s, box-shadow 0.5s" },
   nameTag: { fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:12, letterSpacing:3, border:"2px solid", padding:"2px 10px", textTransform:"uppercase" },
   hpRow: { display:"flex", alignItems:"center", gap:6, marginTop:8, width:"100%" },
   hpLabel: { fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, letterSpacing:1, flexShrink:0 },
@@ -518,7 +531,7 @@ const ch: Record<string, React.CSSProperties> = {
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
-export default function ProblemPage() {
+export default function ProblemPage({ onComplete }: { onComplete?: () => void }) {
   type S1 = "idle"|"bad_submitted"|"vibey_talking"|"cleany_hint"|"hint_shown"|"good_code"|"comment_dlg"|"accepted"|"s1_final"|"s1_done";
   type S2 = "idle"|"vibey_growing"|"vibey_choice"|"vibey_dlg"|"cleany_dlg"|"user_codes"|"accepted"|"s2_final"|"s2_done";
   type S3 = "idle"|"flicker"|"vibey_appears"|"vibey_dlg"|"takeover"|"fight"|"cleany_dlg"|"accepted"|"s3_final";
@@ -801,10 +814,9 @@ export default function ProblemPage() {
               </div>
             )}
             {screen===3 && s3==="vibey_appears" && (
-              <button style={{ ...pg.btnSubmit, background:"#ff4444", animation:"bigShake 0.2s infinite", fontSize:15 }}
-                onClick={s3VibeyTakeover}>
-                🔴 I'LL SOLVE IT MYSELF.
-              </button>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:11, color:"#ff4444", animation:"blink 0.5s step-end infinite", letterSpacing:2 }}>
+                ⚠ VIBEY OVERRIDE IMMINENT
+              </span>
             )}
             {screen===3 && s3==="fight" && (
               <button style={pg.btnHint} onClick={s3Reclaim}>✏ Reclaim control — rewrite</button>
@@ -833,7 +845,7 @@ export default function ProblemPage() {
         <DialogueBox lines={DLG_S1_COMMENT} onComplete={() => { setS1("accepted"); playSuccess(); setTimeout(() => setS1("s1_final"), 600); }} />
       )}
       {s1==="s1_final" && (
-        <DialogueBox lines={DLG_S1_FINAL} onComplete={() => setS1("s1_done")} />
+        <DialogueBox lines={DLG_S1_FINAL} onComplete={() => { setS1("s1_done"); setTimeout(() => { setScreen(2); setS2("idle"); setVibeyLevel(0); }, 800); }} />
       )}
 
       {s2==="vibey_dlg" && (
@@ -843,22 +855,22 @@ export default function ProblemPage() {
         <DialogueBox lines={DLG_S2_CLEANY} onComplete={() => setS2("user_codes")} />
       )}
       {s2==="s2_final" && (
-        <DialogueBox lines={DLG_S2_FINAL} onComplete={() => setS2("s2_done" as S2)} />
+        <DialogueBox lines={DLG_S2_FINAL} onComplete={() => { setS2("s2_done" as S2); setTimeout(() => setScreen(3), 800); }} />
       )}
 
       {s3==="vibey_dlg" && (
         <DialogueBox lines={DLG_S3_VIBEY} onComplete={() => setS3("takeover")} />
       )}
       {s3==="fight" && (
-        <DialogueBox lines={DLG_S3_CLEANY} onComplete={() => {}} />
+        <DialogueBox lines={DLG_S3_CLEANY} onComplete={() => setS3("cleany_dlg")} />
       )}
       {s3==="s3_final" && (
-        <DialogueBox lines={DLG_S3_FINAL} onComplete={() => {}} />
+        <DialogueBox lines={DLG_S3_FINAL} onComplete={() => { stopAllMusic(); setTimeout(() => onComplete?.(), 600); }} />
       )}
 
-      {/* Missing transition: vibey_appears → vibey_dlg */}
+      {/* Missing transition: vibey_appears → vibey_dlg — now handled via s3VibeyTakeover */}
       {s3==="vibey_appears" && (
-        <></>
+        <DialogueBox lines={DLG_S3_VIBEY} onComplete={() => setS3("takeover")} />
       )}
 
       <style>{`
