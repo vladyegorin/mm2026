@@ -847,6 +847,7 @@ export default function ProblemPage({ onComplete }: { onComplete?: () => void })
   const vibeyGlitch      = s1 === "vibey_talking" || s3 === "vibey_appears";
   const vibeyPanelLevel: 0|1|2|3|4 =
     screen === 3 && (s3 === "takeover" || s3 === "fight" || s3 === "erasing") ? 4 :
+    screen === 3 && s3 === "idle" ? (Math.min(4, Math.floor((10 - s3Countdown) / 2.5)) as 0|1|2|3|4) :
     screen === 2 ? vibeyLevel :
     s1 === "vibey_talking" ? 2 : 0;
 
