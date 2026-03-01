@@ -201,9 +201,10 @@ function longestValidParentheses(s: string): number {
 // DIALOGUE DATA
 // ============================================================================
 const DLG_S1_BAD: DialogueLine[] = [
-  { speaker:"vibey", text:"N²?", effect:"glitch", onEnter: () => { playBadSubmit(); playTrack("ghostFight"); } },
+  { speaker:"vibey", text:"N^2?", effect:"glitch", onEnter: () => { playBadSubmit(); playTrack("ghostFight"); } },
   { speaker:"vibey", text:"SERIOUSLY?", effect:"glitch" },
-  { speaker:"vibey", text:"You made me watch that.", effect:"shake" },
+  { speaker:"vibey", text:"YOU ARE BEYOND COOKED!", effect:"glitch" },
+  { speaker:"vibey", text:"You made me watch that. The audacity..", effect:"shake" },
   { speaker:"vibey", text:"Every nested loop is an insult to my existence.", effect:"shake" },
   { speaker:"vibey", text:"Move aside. I'll end this in one second flat.", effect:"glitch" },
 ];
@@ -214,8 +215,8 @@ const DLG_S1_CLEANY: DialogueLine[] = [
 ];
 const DLG_S1_COMMENT: DialogueLine[] = [
   { speaker:"cleany", text:"Good. Clear logic. Helpful comments.", effect:"calm", onEnter: () => { stopAllMusic(); playTrack("sans"); } },
-  { speaker:"vibey", text:"Comments?", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("nyehHehHeh"); } },
-  { speaker:"vibey", text:"POINTLESS. Bloated. Embarrassing.", effect:"glitch" },
+  { speaker:"vibey", text:"COMMENTS???", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("nyehHehHeh"); } },
+  { speaker:"vibey", text:"POINTLESS. Cringe. Embarrassing.", effect:"glitch" },
   { speaker:"vibey", text:"I'd generate ten pages of docs. Instantly.", effect:"glitch" },
   { speaker:"cleany", text:"And none of it would be yours.", effect:"calm" },
 ];
@@ -227,9 +228,9 @@ const DLG_S1_FINAL: DialogueLine[] = [
 ];
 
 const DLG_S2_VIBEY: DialogueLine[] = [
-  { speaker:"vibey", text:"You've been staring at this for HOW long?", effect:"shake", onEnter: () => playTrack("bonetrousle") },
+  { speaker:"vibey", text:"Oh, now you came to me for help?", effect:"shake", onEnter: () => playTrack("bonetrousle") },
   { speaker:"vibey", text:"Fine. I'll show you the loop condition.", effect:"glitch" },
-  { speaker:"vibey", text:"Don't get used to it.", effect:"none" },
+  { speaker:"vibey", text:"Don't get used to it. This is a privilege, brother.", effect:"none" },
 ];
 const DLG_S2_CLEANY: DialogueLine[] = [
   { speaker:"cleany", text:"Hey. Stop.", effect:"calm", onEnter: () => { stopAllMusic(); playSoftChime(); playTrack("hotel"); } },
@@ -238,37 +239,56 @@ const DLG_S2_CLEANY: DialogueLine[] = [
   { speaker:"cleany", text:"Don't just copy it. Own it.", effect:"calm" },
 ];
 const DLG_S2_FINAL: DialogueLine[] = [
-  { speaker:"vibey", text:"You could've been done in 3 seconds.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("heartache"); } },
-  { speaker:"vibey", text:"Why do you insist on struggling?", effect:"shake" },
+  { speaker:"vibey", text:"You could've been done in 3 seconds if you asked ME.", effect:"shake", onEnter: () => { stopAllMusic(); playTrack("heartache"); } },
+  { speaker:"vibey", text:"Why are you like this? The struggle is not it.", effect:"shake" },
   { speaker:"cleany", text:"Because struggle builds intuition.", effect:"calm" },
   { speaker:"cleany", text:"Vibey won't be in your interview.", effect:"calm" },
-  { speaker:"vibey", text:"…You don't know that.", effect:"none" },
+  { speaker:"vibey", text:"...You do not know that. The job market is unhinged.", effect:"none" },
   { speaker:"cleany", text:"Your understanding will be.", effect:"calm" },
 ];
 
 const DLG_S3_VIBEY: DialogueLine[] = [
-  { speaker:"vibey", text:"Oh?", effect:"glitch", onEnter: () => { stopAllMusic(); playTrack("strongerMonsters"); } },
+  { speaker:"vibey", text:"Oh, really?", effect:"glitch", onEnter: () => { stopAllMusic(); playTrack("strongerMonsters"); } },
   { speaker:"vibey", text:"Actually thinking this time?", effect:"glitch" },
-  { speaker:"vibey", text:"Adorable.", effect:"glitch" },
-  { speaker:"vibey", text:"Let me show you what real speed looks like.", effect:"glitch" },
+  { speaker:"vibey", text:"How cute.", effect:"glitch" },
+  { 
+    speaker:"vibey", 
+    text:"Let me show you what real speed looks like.", 
+    effect:"glitch",
+    onEnter: () => { 
+      stopAllMusic();
+      playTrack("megalovania");   // 🔥 START HERE
+    }
+  },
 ];
+
 const DLG_S3_CLEANY: DialogueLine[] = [
-  { speaker:"cleany", text:"STOP.", effect:"flash", onEnter: () => { stopAllMusic(); playTrack("megalovania"); } },
+  { speaker:"cleany", text:"STOP.", effect:"flash" },
   { speaker:"cleany", text:"Look at what Vibey wrote.", effect:"flash" },
   { speaker:"cleany", text:"Do you understand ANY of this?", effect:"flash" },
   { speaker:"cleany", text:"I'm erasing it. Write it yourself.", effect:"calm" },
 ];
+
 const DLG_S3_PROUD: DialogueLine[] = [
-  { speaker:"cleany", text:"You wrote that.", effect:"calm", onEnter: () => { playSoftChime(); } },
+  { 
+    speaker:"cleany", 
+    text:"You wrote that.", 
+    effect:"calm",
+    onEnter: () => { 
+      stopAllMusic();      // 🛑 STOP MEGALOVANIA HERE
+      playSoftChime(); 
+    }
+  },
   { speaker:"cleany", text:"Not Vibey. Not a shortcut.", effect:"calm" },
   { speaker:"cleany", text:"You.", effect:"calm" },
 ];
+
 
 // ============= THE FINAL SCENE — both characters face each other ============
 const DLG_FINAL_SCENE: DialogueLine[] = [
   { speaker:"vibey",  text:"You know I'll always be faster.", effect:"none", onEnter: () => { stopAllMusic(); playTrack("hisTheme"); } },
   { speaker:"cleany", text:"Yes.", effect:"calm" },
-  { speaker:"vibey",  text:"Then why bother? Why make them struggle?", effect:"none" },
+  { speaker:"vibey",  text:"Then why bother? Why make them suffer through the grind?", effect:"none" },
   { speaker:"cleany", text:"Because the struggle is the point.", effect:"calm" },
   { speaker:"vibey",  text:"Sentimentality. From a clipboard.", effect:"none" },
   { speaker:"cleany", text:"From someone who's watched people disappear behind you.", effect:"calm" },
@@ -276,10 +296,10 @@ const DLG_FINAL_SCENE: DialogueLine[] = [
   { speaker:"vibey",  text:"They'll use me anyway. Every one of them.", effect:"none" },
   { speaker:"cleany", text:"And that's okay.", effect:"calm" },
   { speaker:"cleany", text:"Use Vibey. But don't let Vibey do the thinking.", effect:"calm" },
-  { speaker:"vibey",  text:"You really believe that matters.", effect:"none" },
+  { speaker:"vibey",  text:"You really think that matters? Be so for real.", effect:"none" },
   { speaker:"cleany", text:"I believe YOU know it does.", effect:"calm" },
   { speaker:"vibey",  text:"…", effect:"none" },
-  { speaker:"vibey",  text:"Don't push it.", effect:"none" },
+  { speaker:"vibey",  text:"Do not push it. We are done here.", effect:"none" },
 ];
 
 // ============================================================================
@@ -535,7 +555,7 @@ function FinalScene({ onComplete }: { onComplete: () => void }) {
       {phase === "stare" && (
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:16, marginTop:48, zIndex:10 }}>
           <div style={{
-            fontFamily:"'Space Mono',monospace", fontSize:14, color:"rgba(255,255,255,0.55)",
+            fontFamily:"'Space Mono',monospace", fontSize:18, color:"rgba(255,255,255,0.55)",
             letterSpacing:6, textTransform:"uppercase",
             animation:"stareText 3s ease-in-out infinite alternate",
           }}>
